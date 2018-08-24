@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="系统设计," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="文章分为四个部分  1、主要功能 2、运用的技术 3、系统设计 4、优化与总结">
+<meta name="keywords" content="系统设计">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实时交易数据监控系统的设计与实现">
+<meta property="og:url" content="http://dancing-robots.vip/2017/11/30/实时交易数据监控系统的设计与实现/index.html">
+<meta property="og:site_name" content="会跳舞的机器人的博客">
+<meta property="og:description" content="文章分为四个部分  1、主要功能 2、运用的技术 3、系统设计 4、优化与总结">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2591074-e3aad4cdf31fac20.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2591074-972751192426b569.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2591074-2e3896442df35755.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2017-11-30T09:23:25.584Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="实时交易数据监控系统的设计与实现">
+<meta name="twitter:description" content="文章分为四个部分  1、主要功能 2、运用的技术 3、系统设计 4、优化与总结">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/2591074-e3aad4cdf31fac20.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '会跳舞的机器人'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://dancing-robots.vip/2017/11/30/实时交易数据监控系统的设计与实现/"/>
+
+
+
+
+
+  <title>实时交易数据监控系统的设计与实现 | 会跳舞的机器人的博客</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?e7f886ef194c449e0378c1c818837846";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">会跳舞的机器人的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">就像人生，不过是一场即兴。</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-主页">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            主页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-美食">
+          <a href="/美食列表/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heart"></i> <br />
+            
+            美食
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-分类">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-标签">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-归档">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-关于">
+          <a href="/关于我/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-留言板">
+          <a href="/留言板/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-comments"></i> <br />
+            
+            留言板
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://dancing-robots.vip/2017/11/30/实时交易数据监控系统的设计与实现/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="会跳舞的机器人">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="会跳舞的机器人的博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">实时交易数据监控系统的设计与实现</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T17:22:40+08:00">
+                2017-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/系统设计/" itemprop="url" rel="index">
+                    <span itemprop="name">系统设计</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/系统设计/工作记录/" itemprop="url" rel="index">
+                    <span itemprop="name">工作记录</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>文章分为四个部分</p>
+<ul>
+<li>1、主要功能</li>
+<li>2、运用的技术</li>
+<li>3、系统设计</li>
+<li>4、优化与总结</li>
+</ul>
+<a id="more"></a>
+<h4 id="1、主要功能"><a href="#1、主要功能" class="headerlink" title="1、主要功能"></a>1、主要功能</h4><p>对平台支付网关的交易订单进行实时的统计，包括实时的交易金额与交易订单量、不同支付方式的交易总额、订单量以及占比、当天各个时间段的数据统计折线图，实现效果图如下：</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/2591074-e3aad4cdf31fac20.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="untitled.jpg"></p>
+<h4 id="2、运用的技术"><a href="#2、运用的技术" class="headerlink" title="2、运用的技术"></a>2、运用的技术</h4><ul>
+<li>Redis：利用Redis的消息发布与订阅功能、以及List、SortedSet、Hash的数据结构特性</li>
+<li>WebSocket：负责将实时汇总的交易数据推送至浏览器客户端</li>
+</ul>
+<h4 id="3、系统设计"><a href="#3、系统设计" class="headerlink" title="3、系统设计"></a>3、系统设计</h4><p>实时交易数据监控系统所涉及的工程包括交易服务、监控统计服务、监控应用（Dubbo服务化）。</p>
+<ul>
+<li>交易服务在交易成功后向Redis中发布消息并将数据发送至Redis的list队列</li>
+<li>监控服务负责Redis消息的订阅并进行统计，统计完成后将实时的统计结果再次发送至Redis</li>
+<li>监控应用作为WebSocket的服务端，也负责监听监控服务推送过来的实时统计数据并通过WebSocket将数据推送至客户端。</li>
+</ul>
+<p>Redis数据结构图如下：<br><img src="http://upload-images.jianshu.io/upload_images/2591074-972751192426b569.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="Redis数据结构.png"></p>
+<p>利用list的lpush、lpop功能进行对数据的存取操作，SortedSet最开始主要是用于排序，将交易时间作为score进行排序，但是因为涉及到一些数据的计算，在高并发以及分布式部署的情况下，利用SortedSet进行数据统计是会存在问题的，文末会提到，hash结构主要是用于对数据进行原子性的计算。</p>
+<p>UML时序图如下：<br><img src="http://upload-images.jianshu.io/upload_images/2591074-2e3896442df35755.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="Paste_Image.png"></p>
+<h5 id="3-1、交易系统——支付服务"><a href="#3-1、交易系统——支付服务" class="headerlink" title="3.1、交易系统——支付服务"></a>3.1、交易系统——支付服务</h5><p>支付服务在交易成功后，会给Redis发布一条订单记录消息，并向Redis的list列表lpush一条同样的订单记录信息，为了不影响正常的支付业务流程，所以采用的是异步的方式，伪代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">	 * Redis消息通道</span><br><span class="line">	 */</span><br><span class="line">	@Value(&quot;#&#123;settings[&apos;redis.trade.channel&apos;]&#125;&quot;)</span><br><span class="line">	private String redisChannel;</span><br><span class="line">	/**</span><br><span class="line">	 * 微信支付的订单队列key</span><br><span class="line">	 */</span><br><span class="line">	@Value(&quot;#&#123;settings[&apos;redis.trade.wxDetails&apos;]&#125;&quot;)</span><br><span class="line">	private String redisWxQueue;</span><br><span class="line">	/**</span><br><span class="line">	 * 支付宝支付的订单队列key</span><br><span class="line">	 */</span><br><span class="line">	@Value(&quot;#&#123;settings[&apos;redis.trade.alipayDetails&apos;]&#125;&quot;)</span><br><span class="line">	private String redisAlipayQueue;</span><br><span class="line">	/**</span><br><span class="line">	 * 单个线程的线程池</span><br><span class="line">	 */</span><br><span class="line">	protected static ExecutorService executorService = Executors.newSingleThreadExecutor();</span><br><span class="line">	</span><br><span class="line">	/**</span><br><span class="line">	 * 交易成功后需要执行的业务逻辑</span><br><span class="line">	 * @param paymentRecord</span><br><span class="line">	 */</span><br><span class="line">	public void successPayment(final PaymentRecord paymentRecord) &#123;</span><br><span class="line">		// do otherthing...</span><br><span class="line">		// 异步发送消息</span><br><span class="line">		executorService.submit(new Runnable() &#123;</span><br><span class="line">			@Override</span><br><span class="line">			public void run() &#123;</span><br><span class="line">				try &#123;</span><br><span class="line">					pushPaymentRecordMonitorVo(paymentRecord);</span><br><span class="line">				&#125; catch (Exception e) &#123;</span><br><span class="line">					log.error(&quot;payment send to redis fail,PaymengRecord:&quot; + JsonUtil.toJsonString(paymentRecord));</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;);</span><br><span class="line">	&#125;</span><br><span class="line">	/**</span><br><span class="line">	 * 将交易成功的订单信息插入至Redis队列并发送一条通知通知</span><br><span class="line">	 * @param paymentRecord</span><br><span class="line">	 * @throws Exception</span><br><span class="line">	 */</span><br><span class="line">	private void pushPaymentRecordMonitorVo (PaymentRecord paymentRecord) throws Exception&#123;</span><br><span class="line">		PaymentRecordMonitorVo paymentRecordMonitorVo = new PaymentRecordMonitorVo();</span><br><span class="line">		paymentRecordMonitorVo.setMerchantOrderNo(paymentRecord.getMerchantOrderNo());</span><br><span class="line">		paymentRecordMonitorVo.setPayWay(paymentRecord.getPayWayCode() == null ? null : paymentRecord.getPayWayCode().name());</span><br><span class="line">		paymentRecordMonitorVo.setTradeTime(paymentRecord.getPaySuccessTime());</span><br><span class="line">		paymentRecordMonitorVo.setAmount(paymentRecord.getOrderAmount());</span><br><span class="line">		log.info(&quot;订单消息插入Redis队列...&quot;);</span><br><span class="line">		if (paymentRecord.getPayWayCode() != null &amp;&amp; paymentRecord.getPayWayCode().equals(PayWayEnum.WEIXIN)) &#123;</span><br><span class="line">			JedisHelper.dataCluster().lpush(redisWxQueue,JsonUtil.toJsonString(paymentRecordMonitorVo));</span><br><span class="line">		&#125; else if (paymentRecord.getPayWayCode() != null &amp;&amp; paymentRecord.getPayWayCode().equals(PayWayEnum.ALIPAY)) &#123;</span><br><span class="line">			JedisHelper.dataCluster().lpush(redisAlipayQueue,JsonUtil.toJsonString(paymentRecordMonitorVo));</span><br><span class="line">		&#125;</span><br><span class="line">		log.info(&quot;订单消息插入Redis队列结束...&quot;);</span><br><span class="line">		// 发布消息</span><br><span class="line">		log.info(&quot;订单消息发布到Redis...&quot;);</span><br><span class="line">		JedisHelper.dataCluster().publish(redisChannel,JsonUtil.toJsonString(paymentRecordMonitorVo));</span><br><span class="line">		log.info(&quot;订单消息发布到Redis结束...&quot;);</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure></p>
+<h5 id="3-2、监控服务"><a href="#3-2、监控服务" class="headerlink" title="3.2、监控服务"></a>3.2、监控服务</h5><h6 id="3-2-1-主要功能包括："><a href="#3-2-1-主要功能包括：" class="headerlink" title="3.2.1.主要功能包括："></a>3.2.1.主要功能包括：</h6><ul>
+<li>订阅Redis中交易服务发布过来的订单消息以及获取list列表中的订单数据</li>
+<li>根据订单的交易时间，按照每15分钟为一个数据汇总点进行汇总</li>
+<li>对每15分钟汇总的SortedSet进行统计后，将结果再发布至Redis的消息中</li>
+</ul>
+<h6 id="3-2-2-遇到的坑："><a href="#3-2-2-遇到的坑：" class="headerlink" title="3.2.2.遇到的坑："></a>3.2.2.遇到的坑：</h6><p>在监控服务启动的时候会进行Redis的list列表中数据的统计初始化，并开启Redis消息订阅者的监听。但有三个比较坑的地方就是：</p>
+<p>（1）因为用的是Redis6个节点组成的一个集群，所以是用JedisCluster，但是JedisCluster在2.8.x版本以上才支持消息的发布与订阅，项目原先用的是2.7.3版本<br>解决方案：把项目Jedis版本改为2.8.1，pom.xml内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">       &lt;groupId&gt;redis.clients&lt;/groupId&gt;</span><br><span class="line">       &lt;artifactId&gt;jedis&lt;/artifactId&gt;</span><br><span class="line">       &lt;version&gt;2.8.1&lt;/version&gt;</span><br><span class="line">   &lt;/dependency&gt;</span><br></pre></td></tr></table></figure></p>
+<p>（2）Redis的消息发布与订阅，在订阅方必须要手动的调用subscribe()方法，并将监听者和需要监听的通道作为参数传入才能开启监听，而像ActiveMQ这种消息中间件是不需要显示的调用，只需配置好消息监听者就会自动监听的。</p>
+<p>还有一个坑就是subscribe()方法是一个线程阻塞方法，本想在项目启动的时候就调用subscribe()开启消息的订阅，结果发现方法调用后，其他的代码根本没法往下执行。<br>解决方案是：在项目启动的时候调用subscribe()方法开启消息监听，并且新开一个线程去调用subscribe()方法来避免阻塞主线程。</p>
+<p>（3）Redis不支持消息的持久化。在订阅者没有启动的时候，消息发布者将消息发出去了，订阅者没有收到，那订阅者重新启动的时候也不会收到之前发的消息了，而像ActiveMQ是支持消息的持久化的。</p>
+<p>解决方案：在往Redis发布消息的时候也同样往Redis的list列表中lpush一条同样消息的数据（参照上面交易服务中的代码），消息订阅者接收到消息并进行相应的业务处理后，再将list列表中的数据删除，那在监控服务挂掉的情况下，Redis消息无法正常被监听消费，但是Redis的list列表中还是会存有消息的数据，所以后续我们可以从list列表中取出消息数据再进行相应的业务处理，这样就间接的实现了Redis消息的持久化。</p>
+<h6 id="3-2-3-部分代码"><a href="#3-2-3-部分代码" class="headerlink" title="3.2.3.部分代码"></a>3.2.3.部分代码</h6><p>（1）RedisSubscribeHelper.java：监控服务启动时，进行Redis队列中数据的统计初始化，并开启Redis消息订阅者的监听的<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br></pre></td><td class="code"><pre><span class="line">package com.ylp.core.monitor.redis;</span><br><span class="line"></span><br><span class="line">import com.ylp.common.tools.utils.JsonUtil;</span><br><span class="line">import com.ylp.core.monitor.biz.MonitorBiz;</span><br><span class="line">import com.ylp.facade.monitor.utils.JedisHelper;</span><br><span class="line">import com.ylp.facade.monitor.utils.MonitorUtils;</span><br><span class="line">import com.ylp.facade.monitor.vo.PaymentRecordMonitorVo;</span><br><span class="line">import org.apache.commons.lang3.StringUtils;</span><br><span class="line">import org.apache.log4j.Logger;</span><br><span class="line">import org.springframework.beans.factory.annotation.Autowired;</span><br><span class="line">import org.springframework.beans.factory.annotation.Value;</span><br><span class="line">import org.springframework.stereotype.Component;</span><br><span class="line">import redis.clients.jedis.Jedis;</span><br><span class="line">import redis.clients.jedis.JedisCluster;</span><br><span class="line"></span><br><span class="line">import javax.annotation.PostConstruct;</span><br><span class="line">import java.io.IOException;</span><br><span class="line">import java.util.Date;</span><br><span class="line">import java.util.concurrent.ExecutorService;</span><br><span class="line">import java.util.concurrent.Executors;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * @author: 会跳舞的机器人</span><br><span class="line"> * @date: 16/8/25 下午2:24</span><br><span class="line"> * @description:作用1:项目启动时,对Redis消息未进行处理的订单数据进行初始化处理; 作用2:Redis消息订阅的启动器,项目启动时新启动一个线程进行消息的订阅</span><br><span class="line"> */</span><br><span class="line">@Component</span><br><span class="line">public class RedisSubscribeHelper &#123;</span><br><span class="line">    private Logger logger = Logger.getLogger(RedisSubscribeHelper.class);</span><br><span class="line"></span><br><span class="line">    @Autowired</span><br><span class="line">    private RedisSubscribeListener redisSubscribeListener;</span><br><span class="line">    @Autowired</span><br><span class="line">    private MonitorBiz monitorBiz;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Redis消息订阅的channel</span><br><span class="line">     */</span><br><span class="line">    @Value(&quot;#&#123;settings[&apos;redis.trade.channel&apos;]&#125;&quot;)</span><br><span class="line">    private String redisChannel;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 微信支付的订单数据key</span><br><span class="line">     */</span><br><span class="line">    @Value(&quot;#&#123;settings[&apos;redis.trade.wxDetails&apos;]&#125;&quot;)</span><br><span class="line">    private String redisWxQueue;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 支付宝支付的订单数据key</span><br><span class="line">     */</span><br><span class="line">    @Value(&quot;#&#123;settings[&apos;redis.trade.alipayDetails&apos;]&#125;&quot;)</span><br><span class="line">    private String redisAlipayQueue;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * redis消息订阅的subscribe方法为阻塞方法,所以需要单独启动一个线程进行消息订阅</span><br><span class="line">     */</span><br><span class="line">    private ExecutorService executorService = Executors.newSingleThreadExecutor();</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 构造函数执行后,执行数据初始化与消息订阅</span><br><span class="line">     */</span><br><span class="line">    @PostConstruct</span><br><span class="line">    public void doWork() &#123;</span><br><span class="line">        init();</span><br><span class="line">        subscribe();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 数据的初始化,不能一次性取出所有的数据,因为有可能系统在启动的时候Redis的list会有元素push进来</span><br><span class="line">     */</span><br><span class="line">    private void init() &#123;</span><br><span class="line">        long start = System.currentTimeMillis();</span><br><span class="line">        // 避免初始化加载时,JedisCluste还没完成初始化,所以需要sleep</span><br><span class="line">        JedisCluster jedisCluster = JedisHelper.dataCluster();</span><br><span class="line">        if (jedisCluster == null) &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                Thread.sleep(2000);</span><br><span class="line">            &#125; catch (InterruptedException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        logger.info(&quot;开始从Redis中获取微信订单初始化数据....&quot;);</span><br><span class="line">        dealData(jedisCluster, redisWxQueue);</span><br><span class="line">        logger.info(&quot;微信订单记录数据全部处理完毕...&quot;);</span><br><span class="line"></span><br><span class="line">        logger.info(&quot;开始从Redis中获取支付宝订单初始化数据....&quot;);</span><br><span class="line">        dealData(jedisCluster, redisAlipayQueue);</span><br><span class="line">        logger.info(&quot;支付宝订单记录数据全部处理完毕...&quot;);</span><br><span class="line"></span><br><span class="line">        logger.info(&quot;初始化数据工作耗时:&quot; + (System.currentTimeMillis() - start) + &quot;ms&quot;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 根据队列来处理队列中的数据</span><br><span class="line">     *</span><br><span class="line">     * @param queueName</span><br><span class="line">     */</span><br><span class="line">    private void dealData(JedisCluster jedisCluster, String queueName) &#123;</span><br><span class="line">        long startTime = MonitorUtils.getCurrentDayZeroTime().getTime();</span><br><span class="line">        long endTime = MonitorUtils.getDateEndTime().getTime();</span><br><span class="line">        Date tradeTime = null;</span><br><span class="line">        String str = &quot;&quot;;</span><br><span class="line">        PaymentRecordMonitorVo paymentRecordMonitorVo = null;</span><br><span class="line">        while (true) &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                str = jedisCluster.lpop(queueName);</span><br><span class="line">                if (StringUtils.isEmpty(str)) &#123;</span><br><span class="line">                    break;</span><br><span class="line">                &#125;</span><br><span class="line">                paymentRecordMonitorVo = JsonUtil.jsonToObject(str, PaymentRecordMonitorVo.class);</span><br><span class="line">                tradeTime = paymentRecordMonitorVo.getTradeTime();</span><br><span class="line">                // 只处理今天的数据</span><br><span class="line">                if (tradeTime != null &amp;&amp; tradeTime.getTime() &gt;= startTime &amp;&amp; tradeTime.getTime() &lt;= endTime) &#123;</span><br><span class="line">                    monitorBiz.periodStatistics(paymentRecordMonitorVo);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; catch (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">                break;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Redis消息订阅</span><br><span class="line">     */</span><br><span class="line">    private void subscribe() &#123;</span><br><span class="line">        logger.info(&quot;启动Redis消息订阅,channel:&quot; + redisChannel);</span><br><span class="line">        executorService.submit(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                JedisHelper.coreCluster().subscribe(redisSubscribeListener, redisChannel);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>（2）RedisSubscribeListener.java：Redis消息监听者<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">package com.ylp.core.monitor.redis;</span><br><span class="line">import com.ylp.common.tools.utils.JsonUtil;</span><br><span class="line">import com.ylp.core.monitor.biz.MonitorBiz;</span><br><span class="line">import com.ylp.facade.monitor.vo.PaymentRecordMonitorVo;</span><br><span class="line">import org.apache.commons.lang3.StringUtils;</span><br><span class="line">import org.apache.log4j.Logger;</span><br><span class="line">import org.springframework.beans.factory.annotation.Autowired;</span><br><span class="line">import org.springframework.stereotype.Component;</span><br><span class="line">import redis.clients.jedis.Client;</span><br><span class="line">import redis.clients.jedis.JedisPubSub;</span><br><span class="line">import java.io.IOException;</span><br><span class="line">/**</span><br><span class="line"> * @author: 会跳舞的机器人</span><br><span class="line"> * @date: 16/8/23 下午2:57</span><br><span class="line"> * @description: Redis消息队列监听者</span><br><span class="line"> */</span><br><span class="line">@Component(&quot;redisSubscribeListener&quot;)</span><br><span class="line">public class RedisSubscribeListener extends JedisPubSub &#123;</span><br><span class="line">    private Logger logger = Logger.getLogger(RedisSubscribeListener.class);</span><br><span class="line">    @Autowired</span><br><span class="line">    private MonitorBiz monitorBiz;</span><br><span class="line">    public RedisSubscribeListener() &#123;</span><br><span class="line">        super();</span><br><span class="line">    &#125;</span><br><span class="line">    @Override</span><br><span class="line">    public void onMessage(String channel, String message) &#123;</span><br><span class="line">        logger.info(&quot;Redis received...&quot;);</span><br><span class="line">        logger.info(&quot;channel:&quot; + channel + &quot;,message:&quot; + message);</span><br><span class="line">        if (StringUtils.isEmpty(message)) &#123;</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        PaymentRecordMonitorVo paymentRecordMonitorVo = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            paymentRecordMonitorVo = JsonUtil.jsonToObject(message, PaymentRecordMonitorVo.class);</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            logger.error(&quot;message转PaymentRecordMonitorVo异常,message=&quot; + message, e);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        // 先把该笔交易订单信息解析存入对应的统计时间段内,每隔15分钟汇总一次数据,存入Redis数据汇总集合</span><br><span class="line">        long start = System.currentTimeMillis();</span><br><span class="line">        monitorBiz.periodStatistics(paymentRecordMonitorVo);</span><br><span class="line">        logger.info(&quot;monitorBiz.periodStatistics()执行耗时:&quot; + (System.currentTimeMillis() - start) + &quot;ms&quot;);</span><br><span class="line">        // 再统计当天各个时间段的总数据,即为实时的交易数据</span><br><span class="line">        start = System.currentTimeMillis();</span><br><span class="line">        monitorBiz.publishRealTimeData();</span><br><span class="line">        logger.info(&quot;monitorBiz.publishRealTimeData()执行耗时:&quot; + (System.currentTimeMillis() - start) + &quot;ms&quot;);</span><br><span class="line">        super.onMessage(channel, message);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>（3）MonitorBiz.java：Redis数据统计业务类<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br></pre></td><td class="code"><pre><span class="line">package com.ylp.core.monitor.biz;</span><br><span class="line">import com.ylp.common.tools.utils.DateUtils;</span><br><span class="line">import com.ylp.common.tools.utils.JsonUtil;</span><br><span class="line">import com.ylp.facade.monitor.utils.JedisHelper;</span><br><span class="line">import com.ylp.facade.monitor.utils.MonitorUtils;</span><br><span class="line">import com.ylp.facade.monitor.utils.NumberUtil;</span><br><span class="line">import com.ylp.facade.monitor.vo.PaymentRecordMonitorVo;</span><br><span class="line">import com.ylp.facade.monitor.vo.ScreenDataVo;</span><br><span class="line">import com.ylp.facade.monitor.vo.StatisticsVo;</span><br><span class="line">import com.ylp.facade.trade.enums.PayWayEnum;</span><br><span class="line">import org.apache.log4j.Logger;</span><br><span class="line">import org.springframework.beans.factory.annotation.Value;</span><br><span class="line">import org.springframework.stereotype.Component;</span><br><span class="line">import org.springframework.util.CollectionUtils;</span><br><span class="line">import redis.clients.jedis.Tuple;</span><br><span class="line">import java.io.IOException;</span><br><span class="line">import java.math.BigDecimal;</span><br><span class="line">import java.util.*;</span><br><span class="line">import java.util.concurrent.ExecutorService;</span><br><span class="line">import java.util.concurrent.Executors;</span><br><span class="line">/**</span><br><span class="line"> * @author: 会跳舞的机器人</span><br><span class="line"> * @date: 16/8/25 下午6:12</span><br><span class="line"> * @description: Redis数据统计业务类</span><br><span class="line"> */</span><br><span class="line">@Component(&quot;monitorBiz&quot;)</span><br><span class="line">public class MonitorBiz &#123;</span><br><span class="line">    private Logger logger = Logger.getLogger(MonitorBiz.class);</span><br><span class="line">    /**</span><br><span class="line">     * 实时数据监控的数据队列</span><br><span class="line">     */</span><br><span class="line">    @Value(&quot;#&#123;settings[&apos;redis.trade.screen.channel&apos;]&#125;&quot;)</span><br><span class="line">    private String redisTradeScreenChannel;</span><br><span class="line">    /**</span><br><span class="line">     * 微信支付的订单详细数据key</span><br><span class="line">     */</span><br><span class="line">    @Value(&quot;#&#123;settings[&apos;redis.trade.wxDetails&apos;]&#125;&quot;)</span><br><span class="line">    private String redisWxQueue;</span><br><span class="line">    /**</span><br><span class="line">     * 支付宝支付的订单详细数据key</span><br><span class="line">     */</span><br><span class="line">    @Value(&quot;#&#123;settings[&apos;redis.trade.alipayDetails&apos;]&#125;&quot;)</span><br><span class="line">    private String redisAlipayQueue;</span><br><span class="line">    /**</span><br><span class="line">     * 微信支付的订单汇总数据</span><br><span class="line">     */</span><br><span class="line">    @Value(&quot;#&#123;settings[&apos;redis.trade.wxSummary&apos;]&#125;&quot;)</span><br><span class="line">    private String redisWxStatisticsQueue;</span><br><span class="line">    /**</span><br><span class="line">     * 支付宝支付的订单汇总数据</span><br><span class="line">     */</span><br><span class="line">    @Value(&quot;#&#123;settings[&apos;redis.trade.alipaySummary&apos;]&#125;&quot;)</span><br><span class="line">    private String redisAlipayStatisticsQueue;</span><br><span class="line">    /**</span><br><span class="line">     * 单个线程的线程池</span><br><span class="line">     */</span><br><span class="line">    private ExecutorService executorService = Executors.newSingleThreadExecutor();</span><br><span class="line">    /**</span><br><span class="line">     * 分时间间隔的数据统计,将时间段内的数据存入Redis有序集合</span><br><span class="line">     *</span><br><span class="line">     * @param paymentRecordMonitorVo 交易订单信息</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public void periodStatistics(final PaymentRecordMonitorVo paymentRecordMonitorVo) &#123;</span><br><span class="line">        // 根据支付订单的交易时间获取该笔交易应该划分至哪个统计时间段内</span><br><span class="line">        Map&lt;String, Date&gt; dateMap = MonitorUtils.getTimeSpace(paymentRecordMonitorVo.getTradeTime());</span><br><span class="line">        Date start = dateMap.get(&quot;previous&quot;);</span><br><span class="line">        Date end = dateMap.get(&quot;next&quot;);</span><br><span class="line">        logger.info(&quot;start:&quot; + DateUtils.dateToTime(start) + &quot;,end:&quot; + DateUtils.dateToTime(end));</span><br><span class="line">        String payWay = paymentRecordMonitorVo.getPayWay();</span><br><span class="line">        String queue = payWay.equals(PayWayEnum.WEIXIN.name()) ? redisWxStatisticsQueue : payWay.equals(PayWayEnum.ALIPAY.name()) ? redisAlipayStatisticsQueue : &quot;&quot;;</span><br><span class="line">        StatisticsVo result = new StatisticsVo();</span><br><span class="line">        result.setPayWay(payWay);</span><br><span class="line">        result.setPeriodTime(end);</span><br><span class="line">        // 查询该时间段内,统计集合中的数据</span><br><span class="line">        Set&lt;String&gt; wxSet = JedisHelper.dataCluster().zrangeByScore(queue, end.getTime(), end.getTime());</span><br><span class="line">        // 如果汇总集合中没有该时间段的数据,那么则新增</span><br><span class="line">        if (CollectionUtils.isEmpty(wxSet)) &#123;</span><br><span class="line">            logger.info(&quot;wxSet is null.... &quot;);</span><br><span class="line">            result.setTotalOrderCount(1);</span><br><span class="line">            result.setTotalOrderAmount(paymentRecordMonitorVo.getAmount().doubleValue());</span><br><span class="line">            JedisHelper.dataCluster().zadd(queue, end.getTime(), JsonUtil.toJsonString(result));</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            logger.info(&quot;wxSet is not null and wxSet.size()=&quot; + wxSet.size());</span><br><span class="line">            Double amount = 0.0;</span><br><span class="line">            Integer count = 0;</span><br><span class="line">            Iterator&lt;String&gt; iterator = wxSet.iterator();</span><br><span class="line">            while (iterator.hasNext()) &#123;</span><br><span class="line">                try &#123;</span><br><span class="line">                    StatisticsVo statisticsVo = JsonUtil.jsonToObject(iterator.next(), StatisticsVo.class);</span><br><span class="line">                    logger.info(&quot;statisticsVo:&quot; + JsonUtil.toJsonString(statisticsVo));</span><br><span class="line">                    amount = NumberUtil.add(statisticsVo.getTotalOrderAmount().doubleValue(), amount.doubleValue());</span><br><span class="line">                    count = count + statisticsVo.getTotalOrderCount();</span><br><span class="line">                &#125; catch (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            result.setTotalOrderCount(count + 1);</span><br><span class="line">            result.setTotalOrderAmount(NumberUtil.add(amount, paymentRecordMonitorVo.getAmount().doubleValue()));</span><br><span class="line">            // 先移除旧数据</span><br><span class="line">            long removeRow = JedisHelper.dataCluster().zremrangeByScore(queue, end.getTime(), end.getTime());</span><br><span class="line">            logger.info(&quot;移除旧数据记录数:&quot; + removeRow);</span><br><span class="line">            // 再插入最新的数据</span><br><span class="line">            JedisHelper.dataCluster().zadd(queue, end.getTime(), JsonUtil.toJsonString(result));</span><br><span class="line">        &#125;</span><br><span class="line">        // 异步删除Redis队列中的订单详细信息</span><br><span class="line">        final String key = payWay.equals(PayWayEnum.WEIXIN.name()) ? redisWxQueue : payWay.equals(PayWayEnum.ALIPAY.name()) ? redisAlipayQueue : &quot;&quot;;</span><br><span class="line">        executorService.submit(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                // 指定元素进行删除</span><br><span class="line">                Long row = JedisHelper.dataCluster().lrem(key, 0, JsonUtil.toJsonString(paymentRecordMonitorVo));</span><br><span class="line">                logger.info(&quot;删除明细记录数:&quot; + row);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        logger.info(&quot;result:&quot; + JsonUtil.toJsonString(result));</span><br><span class="line">    &#125;</span><br><span class="line">    /**</span><br><span class="line">     * 实时数据推送</span><br><span class="line">     */</span><br><span class="line">    public void publishRealTimeData() &#123;</span><br><span class="line">        ScreenDataVo screenDataVo = dayStatistics();</span><br><span class="line">        // 将屏幕监控的数据放入Redis消息中</span><br><span class="line">        JedisHelper.dataCluster().publish(redisTradeScreenChannel, JsonUtil.toJsonString(screenDataVo));</span><br><span class="line">        logger.info(&quot;监控实时汇总数据消息发送成功...&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h5 id="3-3、监控应用系统"><a href="#3-3、监控应用系统" class="headerlink" title="3.3、监控应用系统"></a>3.3、监控应用系统</h5><p>系统采用前后端分离的模式，后端提供获取初始化数据的API给前端进行调用，数据初始化完成后，每笔交易产生的数据变动都通过WebSocket的方式实时传输到浏览器客户端进行展示。</p>
+<h5 id="3-3-1-主要功能："><a href="#3-3-1-主要功能：" class="headerlink" title="3.3.1.主要功能："></a>3.3.1.主要功能：</h5><ul>
+<li>实现WebSocket的服务端，将实时的交易数据推送至客户端</li>
+<li>作为Redis消息的订阅方，获取到消息数据后，将数据通过WebSocket的方式广播出去<h5 id="3-3-2-遇到的坑"><a href="#3-3-2-遇到的坑" class="headerlink" title="3.3.2.遇到的坑"></a>3.3.2.遇到的坑</h5></li>
+</ul>
+<p>（1）在本地测试的时候，WebSocket服务端与客户端能进行正常的通信，部署至服务器后，客户端却无法连接到服务端，后来发现本地IDEA运行的是Tomcat8，服务器上部署的是Tomcat7.x版本，于是把服务器上的Tomcat版本换成8后就能进行正常的通信了。<br>WebSocket所需要的jar包如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;javax.websocket&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;javax.websocket-api&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;1.0&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.glassfish.tyrus.bundles&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;tyrus-standalone-client&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;1.9&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure></p>
+<h5 id="3-3-3-部分代码"><a href="#3-3-3-部分代码" class="headerlink" title="3.3.3.部分代码"></a>3.3.3.部分代码</h5><p>（1）WebSocketServer.java：WebSocket服务端<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line">package com.ylp.webSocket.server;</span><br><span class="line">import org.apache.log4j.Logger;</span><br><span class="line">import javax.websocket.*;</span><br><span class="line">import javax.websocket.server.ServerEndpoint;</span><br><span class="line">import java.util.Map;</span><br><span class="line">import java.util.Set;</span><br><span class="line">import java.util.concurrent.ConcurrentHashMap;</span><br><span class="line">/**</span><br><span class="line"> * @author: 会跳舞的机器人</span><br><span class="line"> * @date: 16/8/24 上午11:25</span><br><span class="line"> * @description:WebSocket服务端</span><br><span class="line"> */</span><br><span class="line">@ServerEndpoint(&quot;/tradeSocketServer&quot;)</span><br><span class="line">public class WebSocketServer &#123;</span><br><span class="line">    private Logger logger = Logger.getLogger(this.getClass().getName());</span><br><span class="line">    /**</span><br><span class="line">     * 客户端会话集合</span><br><span class="line">     */</span><br><span class="line">    private static Map&lt;String, Session&gt; sessionMap = new ConcurrentHashMap&lt;String, Session&gt;();</span><br><span class="line">    /**</span><br><span class="line">     * 连接建立成功需要执行的方法</span><br><span class="line">     *</span><br><span class="line">     * @param session</span><br><span class="line">     */</span><br><span class="line">    @OnOpen</span><br><span class="line">    public void onOpen(Session session) &#123;</span><br><span class="line">        logger.info(&quot;onOpen,sessionId:&quot; + session.getId());</span><br><span class="line">        sessionMap.put(session.getId(), session);</span><br><span class="line">    &#125;</span><br><span class="line">    /**</span><br><span class="line">     * 收到客户端调用后需要执行的方法</span><br><span class="line">     *</span><br><span class="line">     * @param message</span><br><span class="line">     * @param session</span><br><span class="line">     */</span><br><span class="line">    @OnMessage</span><br><span class="line">    public void onMessage(String message, Session session) &#123;</span><br><span class="line">        logger.info(&quot;received message:&quot; + message);</span><br><span class="line">        broadcastAll(message);</span><br><span class="line">    &#125;</span><br><span class="line">    /**</span><br><span class="line">     * 广播给所有客户端</span><br><span class="line">     *</span><br><span class="line">     * @param message</span><br><span class="line">     */</span><br><span class="line">    public static void broadcastAll(String message) &#123;</span><br><span class="line">        Set&lt;Map.Entry&lt;String, Session&gt;&gt; set = sessionMap.entrySet();</span><br><span class="line">        for (Map.Entry&lt;String, Session&gt; i : set) &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                i.getValue().getBasicRemote().sendText(message);</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    /**</span><br><span class="line">     * 连接关闭时执行的方法</span><br><span class="line">     *</span><br><span class="line">     * @param session</span><br><span class="line">     * @param closeReason</span><br><span class="line">     */</span><br><span class="line">    @OnClose</span><br><span class="line">    public void onClose(Session session, CloseReason closeReason) &#123;</span><br><span class="line">        sessionMap.remove(session.getId());</span><br><span class="line">        logger.info(String.format(&quot;Session %s closed because of %s&quot;, session.getId(), closeReason));</span><br><span class="line">    &#125;</span><br><span class="line">    /**</span><br><span class="line">     * 发生错误时执行的方法</span><br><span class="line">     *</span><br><span class="line">     * @param session</span><br><span class="line">     * @param throwable</span><br><span class="line">     */</span><br><span class="line">    @OnError</span><br><span class="line">    public void error(Session session, Throwable throwable) &#123;</span><br><span class="line">        sessionMap.remove(session.getId());</span><br><span class="line">        logger.error(&quot;异常&quot;, throwable);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>（3）RedisSubscribeListener.java：Redis消息监听者，这个工程中又要实现一遍，只不过是收到消息后需要执行的业务逻辑不一样，同样的，RedisSubcribeHelper.java类也要重新实现一遍，后续可以优化<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">package com.ylp.redis;</span><br><span class="line">import com.ylp.common.tools.utils.JsonUtil;</span><br><span class="line">import com.ylp.facade.monitor.vo.ScreenDataVo;</span><br><span class="line">import com.ylp.webSocket.server.WebSocketServer;</span><br><span class="line">import org.apache.commons.lang3.StringUtils;</span><br><span class="line">import org.apache.log4j.Logger;</span><br><span class="line">import org.springframework.stereotype.Component;</span><br><span class="line">import redis.clients.jedis.Client;</span><br><span class="line">import redis.clients.jedis.JedisPubSub;</span><br><span class="line">import java.io.IOException;</span><br><span class="line">/**</span><br><span class="line"> * @author: 会跳舞的机器人</span><br><span class="line"> * @date: 16/8/23 下午2:57</span><br><span class="line"> * @description: Redis消息队列监听者</span><br><span class="line"> */</span><br><span class="line">@Component(&quot;redisSubscribeListener&quot;)</span><br><span class="line">public class RedisSubscribeListener extends JedisPubSub &#123;</span><br><span class="line">    private Logger logger = Logger.getLogger(RedisSubscribeListener.class);</span><br><span class="line">    public RedisSubscribeListener() &#123;</span><br><span class="line">        super();</span><br><span class="line">    &#125;</span><br><span class="line">    @Override</span><br><span class="line">    public void onMessage(String channel, String message) &#123;</span><br><span class="line">        logger.info(&quot;Redis received...&quot;);</span><br><span class="line">        logger.info(&quot;channel:&quot; + channel + &quot;,message:&quot; + message);</span><br><span class="line">        if (StringUtils.isEmpty(message)) &#123;</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        try &#123;</span><br><span class="line">            ScreenDataVo screenDataVo = JsonUtil.jsonToObject(message, ScreenDataVo.class);</span><br><span class="line">            logger.info(&quot;screenDataVo:&quot; + JsonUtil.toJsonString(screenDataVo));</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            logger.error(&quot;message转ScreenDataVo异常,message=&quot; + message, e);</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        // 将实时交易数据推送至WebSocketServer</span><br><span class="line">        WebSocketServer.broadcastAll(message);</span><br><span class="line">        super.onMessage(channel, message);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>（4）WebSocket的客户端（模拟）<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page language=&quot;java&quot; contentType=&quot;text/html; charset=UTF-8&quot;</span><br><span class="line">    pageEncoding=&quot;UTF-8&quot;%&gt;</span><br><span class="line">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot; &quot;http://www.w3.org/TR/html4/loose.dtd&quot;&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=UTF-8&quot;&gt;</span><br><span class="line">    &lt;title&gt;Index&lt;/title&gt;</span><br><span class="line">    &lt;script type=&quot;text/javascript&quot;&gt;</span><br><span class="line">        var ws = null;</span><br><span class="line">        function startWebSocket() &#123;</span><br><span class="line">            if (&apos;WebSocket&apos; in window)</span><br><span class="line">                ws = new WebSocket(&quot;ws://172.xx.xx.xx/tradeSocketServer&quot;);</span><br><span class="line">            else if (&apos;MozWebSocket&apos; in window)</span><br><span class="line">                ws = new MozWebSocket(&quot;ws://172.xx.xx.xx/tradeSocketServer&quot;);</span><br><span class="line">            else</span><br><span class="line">                alert(&quot;not support&quot;);</span><br><span class="line">            ws.onmessage = function (evt) &#123;</span><br><span class="line">                alert(evt.data);</span><br><span class="line">            &#125;;</span><br><span class="line">            ws.onclose = function (evt) &#123;</span><br><span class="line">                alert(&quot;close&quot;);</span><br><span class="line">            &#125;;</span><br><span class="line">            ws.onopen = function (evt) &#123;</span><br><span class="line">                alert(&quot;open&quot;);</span><br><span class="line">            &#125;;</span><br><span class="line">        &#125;</span><br><span class="line">        function sendMsg() &#123;</span><br><span class="line">            ws.send(document.getElementById(&apos;writeMsg&apos;).value);</span><br><span class="line">        &#125;</span><br><span class="line">    &lt;/script&gt;</span><br><span class="line">&lt;/head&gt;</span><br><span class="line">&lt;body onload=&quot;startWebSocket();&quot;&gt;</span><br><span class="line">&lt;input type=&quot;text&quot; id=&quot;writeMsg&quot;&gt;&lt;/input&gt;</span><br><span class="line">&lt;input type=&quot;button&quot; value=&quot;send&quot; onclick=&quot;sendMsg()&quot;&gt;&lt;/input&gt;</span><br><span class="line">&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure></p>
+<h6 id="3-3-4-WebSocket服务端通过域名访问配置Nginx"><a href="#3-3-4-WebSocket服务端通过域名访问配置Nginx" class="headerlink" title="3.3.4.WebSocket服务端通过域名访问配置Nginx"></a>3.3.4.WebSocket服务端通过域名访问配置Nginx</h6><p>1.WebSocket服务端如果要通过域名来访问，需要配置Nginx，附上Nginx相关的配置信息，需要特别配置map选项<br>Nginx版本：Tengine version: Tengine/2.1.1 (nginx/1.6.2)<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">map $http_upgrade $connection_upgrade &#123;</span><br><span class="line">    default upgrade;</span><br><span class="line">    &apos;&apos; close;</span><br><span class="line">&#125;</span><br><span class="line">server &#123;</span><br><span class="line">    listen   80;</span><br><span class="line">    server_name xxx.xxx.com;</span><br><span class="line">     location / &#123;</span><br><span class="line">        root   /usr/local/www/monitorsystem;</span><br><span class="line">        index index.html;</span><br><span class="line">        try_files $uri $uri/ /index.html =404;</span><br><span class="line">    &#125;</span><br><span class="line">    location /monitor/ &#123;</span><br><span class="line">        proxy_pass http://172.xx.xx.xx:0000/;</span><br><span class="line">        add_header &apos;Access-Control-Allow-Origin&apos; &apos;*&apos;;</span><br><span class="line">        add_header &apos;Access-Control-Allow-Credentials&apos; &apos;true&apos;;</span><br><span class="line">        add_header &apos;Access-Control-Allow-Methods&apos; &apos;POST, GET, OPTIONS,PUT,DELETE&apos;;</span><br><span class="line">        add_header &apos;Access-Control-Allow-Headers&apos; &apos;*,token&apos;;</span><br><span class="line">        proxy_set_header Host $http_host;</span><br><span class="line">        proxy_set_header Cookie $http_cookie;</span><br><span class="line">        proxy_set_header X-Real-IP $remote_addr;</span><br><span class="line">        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line">        proxy_set_header X-Forwarded-Proto $scheme;</span><br><span class="line">        proxy_read_timeout 1200;</span><br><span class="line">        client_max_body_size  100m;</span><br><span class="line">        proxy_http_version 1.1;</span><br><span class="line">        proxy_set_header Upgrade $http_upgrade;</span><br><span class="line">        proxy_set_header Connection &quot;upgrade&quot;;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>2.遇到的坑</p>
+<p>在客户端不活动的情况下，默认60秒后会客户端会自动断开与服务端的连接，通过Nginx中的proxy_red_timeout参数可以配置，客户端也可以通过每隔一段时间去请求一次服务端，保持于服务端的连接。</p>
+<h4 id="4、总结与优化"><a href="#4、总结与优化" class="headerlink" title="4、总结与优化"></a>4、总结与优化</h4><p>1、在测试部门进行高并发测试的情况下，periodStatistics()统计方法会出现数据统计错乱的情况，所以针对这个方法要加上同步代码块</p>
+<p>2、上述的代码在单台服务器部署的情况下，基本上没啥问题，但是如果部署在多台服务器上（分布式部署），那么很多问题就发生咯，比如说：<br>问题1：Redis消息发布与订阅，消息发布出去了，A服务器中的应用会收到消息然后进行统计，B服务器中的应用也会收到相同的消息然后进行计算，那计算出来的结果就多出一倍的数据了。</p>
+<p>问题2：当日实时数据是统计Redis中“每15分钟汇总”数据的SortedSet，即一天被分为96条汇总数据，统计当日实时数据的时候就把96条数据进行累加即可。但是 但是在每一笔订单过来的时候，会先计算出此次统计的最新结果，再把旧的“每15分钟汇总”数据记录给删除，然后再插入此次计算的最新结果（这样做的原因是SortedSet没有更新的方法），代码请看MonitorBiz的periodStatistics()方法，这样就会存在一个问题：A服务器计算出最新统计结构，然后把旧数据删除了，还没插入最新统计数据的时候，B机器去获取当日实时数据，这时候就会缺少那条已删除还未插入的数据，造成数据的错误。</p>
+<p>那针对上面两个问题的解决方案是：<br>问题1解决方案：Redis消息发送的时候只发布一条简单的消息通知即可，把交易订单的数据存入Redis的list队列中，如果多个服务器都收到了消息，便去list队列中获取最新的一条记录，取到则进行处理，取不到则直接返回，Redis的list队列是能保证只有一台机器能取到数据的。</p>
+<p>问题2解决方案：最开始设计的时候决定用SortedSet这种数据结构是因为它能满足排序的要求，但是从上面的问题看来，它也只是能解决排序的问题而已（前端要求要按时间排好顺序在“获取初始化数据”的接口中将数据发给他），对于并发的读写数据的操作都不能很好的支持，并不能解决上面所说的问题，所以最后决定改用Hash这种数据结构，原因是因为它支持原子性的数据累加操作，在高并发的情况下，能有很好的支持，如hincrby、hincrbyfloat方法。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">     * 1.每隔15分钟汇总一次数据,存入Redis数据汇总集合</span><br><span class="line">     * 2.当日实时数据进行累加操作</span><br><span class="line">     *</span><br><span class="line">     * @param message 交易订单类型</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public void periodStatistics(String message) &#123;</span><br><span class="line">        String listStr = &quot;&quot;;</span><br><span class="line">        if (StringUtils.isNotEmpty(message) &amp;&amp; message.equals(PayWayEnum.WEIXIN.name())) &#123;</span><br><span class="line">            listStr = JedisHelper.dataCluster().lpop(redisWxQueue);</span><br><span class="line">        &#125; else if (StringUtils.isNotEmpty(message) &amp;&amp; message.equals(PayWayEnum.ALIPAY.name())) &#123;</span><br><span class="line">            listStr = JedisHelper.dataCluster().lpop(redisAlipayQueue);</span><br><span class="line">        &#125;</span><br><span class="line">        // 为空则说明数据被其他服务器取走了,则不用进行处理</span><br><span class="line">        if (StringUtils.isEmpty(listStr)) &#123;</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        PaymentRecordMonitorVo paymentRecordMonitorVo = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            paymentRecordMonitorVo = JsonUtil.jsonToObject(listStr, PaymentRecordMonitorVo.class);</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        // 每日实时数据的hash结构增量统计</span><br><span class="line">        increaseBy(paymentRecordMonitorVo);</span><br><span class="line">        // 分时间段的汇总统计</span><br><span class="line">        periodStatistics(paymentRecordMonitorVo);</span><br><span class="line">    &#125;</span><br><span class="line">    /**</span><br><span class="line">     * 每日实时数据的hash结构增量统计</span><br><span class="line">     *</span><br><span class="line">     * @param paymentRecordMonitorVo</span><br><span class="line">     */</span><br><span class="line">    private void increaseBy(PaymentRecordMonitorVo paymentRecordMonitorVo) &#123;</span><br><span class="line">        // step1:微信订单数据处理</span><br><span class="line">        if (paymentRecordMonitorVo.getPayWay().equals(PayWayEnum.ALIPAY.name())) &#123;</span><br><span class="line">            JedisHelper.dataCluster().hincrBy(daySummaryKey, dayAlipayCount, 1);</span><br><span class="line">            JedisHelper.dataCluster().hincrByFloat(daySummaryKey, dayAlipayAmount, paymentRecordMonitorVo.getAmount().doubleValue());</span><br><span class="line">            // step2:支付宝订单数据处理</span><br><span class="line">        &#125; else if (paymentRecordMonitorVo.getPayWay().equals(PayWayEnum.WEIXIN.name())) &#123;</span><br><span class="line">            JedisHelper.dataCluster().hincrBy(daySummaryKey, dayWxCount, 1);</span><br><span class="line">            JedisHelper.dataCluster().hincrByFloat(daySummaryKey, dayWxAmount, paymentRecordMonitorVo.getAmount().doubleValue());</span><br><span class="line">        &#125;</span><br><span class="line">        // step3:总的数据增加</span><br><span class="line">        JedisHelper.dataCluster().hincrBy(daySummaryKey, dayTotalCount, 1);</span><br><span class="line">        JedisHelper.dataCluster().hincrByFloat(daySummaryKey, dayTotalAmount, paymentRecordMonitorVo.getAmount().doubleValue());</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>3、由于系统在设计之初是满足实时交易数据显示的，所以在每一笔订单过来的时候都会进行数据统计，然后利用WebSocket进行实时数据推送到客户端，在进行压力测试的时候，每秒的并发达到上百个，于是浏览器客户端就会发生崩溃的现象，因为每秒都会向浏览器客户端推送上百次<br>解决方案：在服务端进行数据统计后，每隔2秒把最新的数据推送至浏览器客户端。</p>
+<p>4、前期开发的时候为了更好的调试与问题的定位，所以写了很多logger.info()这种日志记录操作，在上生产环境的时候要把这些内容去掉或者日志级别改为debug，这种日志记录会设计到磁盘IO读写，在某些时候可能会成为系统性能的瓶颈。</p>
+<p>注：上述的代码大部分都已经过优化，优化后的代码就不贴出来了。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>如果您觉得有帮助到您，不妨考虑请作者喝杯咖啡鼓励一下。</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/uploads/weixin.png" alt="会跳舞的机器人 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/uploads/alipay.png" alt="会跳舞的机器人 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者：</strong>
+    会跳舞的机器人
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://dancing-robots.vip/2017/11/30/实时交易数据监控系统的设计与实现/" title="实时交易数据监控系统的设计与实现">http://dancing-robots.vip/2017/11/30/实时交易数据监控系统的设计与实现/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/系统设计/" rel="tag"># 系统设计</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/11/30/记一次线上Java程序导致服务器CPU占用率过高的问题排除过程/" rel="next" title="记一次线上Java程序导致服务器CPU占用率过高的问题排除过程">
+                <i class="fa fa-chevron-left"></i> 记一次线上Java程序导致服务器CPU占用率过高的问题排除过程
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/11/30/记一次系统密码安全事故以及修改方案/" rel="prev" title="记一次系统密码安全事故以及修改方案">
+                记一次系统密码安全事故以及修改方案 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+<span class="jiathis_txt">分享到：</span>
+<a class="jiathis_button_fav">收藏夹</a>
+<a class="jiathis_button_copy">复制网址</a>
+<a class="jiathis_button_email">邮件</a>
+<a class="jiathis_button_weixin">微信</a>
+<a class="jiathis_button_qzone">QQ空间</a>
+<a class="jiathis_button_tqq">腾讯微博</a>
+<a class="jiathis_button_douban">豆瓣</a>
+<a class="jiathis_button_share">一键分享</a>
+
+<a href="http://www.jiathis.com/share?uid=2140465" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+var jiathis_config={
+  data_track_clickback:true,
+  summary:"",
+  shortUrl:false,
+  hideMore:false
+}
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMTk2Ny84NTMx"></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/uploads/avatar.jpg"
+                alt="会跳舞的机器人" />
+            
+              <p class="site-author-name" itemprop="name">会跳舞的机器人</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">32</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">24</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://gitee.com/dancing_robot" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:2268549298@qq.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://www.jianshu.com/u/21c249f3c8d0" target="_blank" title="简书">
+                    
+                      <i class="fa fa-fw fa-rocket"></i>简书</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="undefined" target="_blank" title="知乎">
+                    
+                      <i class="fa fa-fw fa-globe"></i>知乎</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#1、主要功能"><span class="nav-number">1.</span> <span class="nav-text">1、主要功能</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2、运用的技术"><span class="nav-number">2.</span> <span class="nav-text">2、运用的技术</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3、系统设计"><span class="nav-number">3.</span> <span class="nav-text">3、系统设计</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#3-1、交易系统——支付服务"><span class="nav-number">3.1.</span> <span class="nav-text">3.1、交易系统——支付服务</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-2、监控服务"><span class="nav-number">3.2.</span> <span class="nav-text">3.2、监控服务</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#3-2-1-主要功能包括："><span class="nav-number">3.2.1.</span> <span class="nav-text">3.2.1.主要功能包括：</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-2-2-遇到的坑："><span class="nav-number">3.2.2.</span> <span class="nav-text">3.2.2.遇到的坑：</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-2-3-部分代码"><span class="nav-number">3.2.3.</span> <span class="nav-text">3.2.3.部分代码</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-3、监控应用系统"><span class="nav-number">3.3.</span> <span class="nav-text">3.3、监控应用系统</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-3-1-主要功能："><span class="nav-number">3.4.</span> <span class="nav-text">3.3.1.主要功能：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-3-2-遇到的坑"><span class="nav-number">3.5.</span> <span class="nav-text">3.3.2.遇到的坑</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-3-3-部分代码"><span class="nav-number">3.6.</span> <span class="nav-text">3.3.3.部分代码</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#3-3-4-WebSocket服务端通过域名访问配置Nginx"><span class="nav-number">3.6.1.</span> <span class="nav-text">3.3.4.WebSocket服务端通过域名访问配置Nginx</span></a></li></ol></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4、总结与优化"><span class="nav-number">4.</span> <span class="nav-text">4、总结与优化</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">会跳舞的机器人</span>
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

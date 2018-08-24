@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="ZooKeeper,分布式锁," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="一、Zookeeper是什么Zookeeper是一个高性能的分布式系统的协调服务。它在一个简单的接口里暴露公共服务：像命名、配置管理、同步、和群组服务，所以你没有必要从头开始实现它们。你可以使用现成的Zookeeper去实现共识、群组管理、领导人选举和业务协议。并且你可以在它的基础之上建立自己特定的需求。">
+<meta name="keywords" content="ZooKeeper,分布式锁">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ZooKeeper分布式锁应用">
+<meta property="og:url" content="http://dancing-robots.vip/2017/11/28/ZooKeeper分布式锁应用/index.html">
+<meta property="og:site_name" content="会跳舞的机器人的博客">
+<meta property="og:description" content="一、Zookeeper是什么Zookeeper是一个高性能的分布式系统的协调服务。它在一个简单的接口里暴露公共服务：像命名、配置管理、同步、和群组服务，所以你没有必要从头开始实现它们。你可以使用现成的Zookeeper去实现共识、群组管理、领导人选举和业务协议。并且你可以在它的基础之上建立自己特定的需求。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-11-28T07:09:30.634Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ZooKeeper分布式锁应用">
+<meta name="twitter:description" content="一、Zookeeper是什么Zookeeper是一个高性能的分布式系统的协调服务。它在一个简单的接口里暴露公共服务：像命名、配置管理、同步、和群组服务，所以你没有必要从头开始实现它们。你可以使用现成的Zookeeper去实现共识、群组管理、领导人选举和业务协议。并且你可以在它的基础之上建立自己特定的需求。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '会跳舞的机器人'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://dancing-robots.vip/2017/11/28/ZooKeeper分布式锁应用/"/>
+
+
+
+
+
+  <title>ZooKeeper分布式锁应用 | 会跳舞的机器人的博客</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?e7f886ef194c449e0378c1c818837846";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">会跳舞的机器人的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">就像人生，不过是一场即兴。</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-主页">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            主页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-美食">
+          <a href="/美食列表/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heart"></i> <br />
+            
+            美食
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-分类">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-标签">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-归档">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-关于">
+          <a href="/关于我/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-留言板">
+          <a href="/留言板/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-comments"></i> <br />
+            
+            留言板
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://dancing-robots.vip/2017/11/28/ZooKeeper分布式锁应用/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="会跳舞的机器人">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="会跳舞的机器人的博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">ZooKeeper分布式锁应用</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-28T15:02:48+08:00">
+                2017-11-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ZooKeeper/" itemprop="url" rel="index">
+                    <span itemprop="name">ZooKeeper</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="一、Zookeeper是什么"><a href="#一、Zookeeper是什么" class="headerlink" title="一、Zookeeper是什么"></a>一、Zookeeper是什么</h4><p>Zookeeper是一个高性能的分布式系统的协调服务。它在一个简单的接口里暴露公共服务：像命名、配置管理、同步、和群组服务，所以你没有必要从头开始实现它们。你可以使用现成的Zookeeper去实现共识、群组管理、领导人选举和业务协议。并且你可以在它的基础之上建立自己特定的需求。</p>
+<a id="more"></a>
+<h4 id="二、Zookeeper分布式锁的实现原理"><a href="#二、Zookeeper分布式锁的实现原理" class="headerlink" title="二、Zookeeper分布式锁的实现原理"></a>二、Zookeeper分布式锁的实现原理</h4><p>利用临时顺序节点实现Zookeeper分布式锁。</p>
+<ul>
+<li>1、首先为一个lock场景，在zookeeper中指定对应的一个根节点，用于记录资源竞争的内容，称之为/lock_node</li>
+<li>2、每个lock创建后，会lazy在zookeeper中创建一个node节点，表明对应的资源竞争标识。 (小技巧：node节点为EPHEMERAL_SEQUENTIAL，自增长的临时节点)。比如有两个客户端创建znode，那分别为/lock_node/lock-1、/lock_node/lock-2</li>
+<li>3、进行lock操作时，获取对应lock根节点下的所有字节点，也即处于竞争中的资源标识</li>
+<li>4、按照Fair竞争的原则，按照对应的自增内容做排序，取出编号最小的一个节点做为lock的owner，判断自己的节点id是否就为owner id，如果是则返回，lock成功。</li>
+<li>5、如果自己非owner id，按照排序的结果找到序号比自己前一位的id，关注它锁释放的操作(也就是exist watcher)，形成一个链式的触发过程。</li>
+</ul>
+<h5 id="unlock过程"><a href="#unlock过程" class="headerlink" title="unlock过程"></a>unlock过程</h5><ul>
+<li>6、将自己id对应的节点删除即可，对应的下一个排队的节点就可以收到Watcher事件，从而被唤醒得到锁后退出</li>
+</ul>
+<p>ZooKeeper的几个特性让它非常合适作为分布式锁服务</p>
+<ul>
+<li>zookeeper支持watcher机制，这样实现阻塞锁，可以watch锁数据，等到数据被删除，zookeeper会通知客户端去重新竞争锁。</li>
+<li>zookeeper的数据可以支持临时节点的概念，即客户端写入的数据是临时数据，在客户端宕机后，临时数据会被删除，这样就实现了锁的异常释放。使用这样的方式，就不需要给锁增加超时自动释放的特性了。</li>
+</ul>
+<h4 id="三、Zookeeper分布式锁应用"><a href="#三、Zookeeper分布式锁应用" class="headerlink" title="三、Zookeeper分布式锁应用"></a>三、Zookeeper分布式锁应用</h4><p>Curator是Netflix公司开源的一个Zookeeper客户端，与Zookeeper提供的原生客户端相比，Curator的抽象层次更高，简化了Zookeeper客户端的开发量。</p>
+<h6 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h6><p>1、创建ZooKeeperConnector.java<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br></pre></td><td class="code"><pre><span class="line">package com.robot.zookeeper.components;</span><br><span class="line"></span><br><span class="line">import org.apache.curator.RetryPolicy;</span><br><span class="line">import org.apache.curator.framework.CuratorFramework;</span><br><span class="line">import org.apache.curator.framework.CuratorFrameworkFactory;</span><br><span class="line">import org.apache.curator.retry.ExponentialBackoffRetry;</span><br><span class="line">import org.apache.curator.utils.CloseableUtils;</span><br><span class="line">import org.slf4j.Logger;</span><br><span class="line">import org.slf4j.LoggerFactory;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * @author: 会跳舞的机器人</span><br><span class="line"> * @date: 2017/6/21 18:07</span><br><span class="line"> * @description:ZooKeeper连接器</span><br><span class="line"> */</span><br><span class="line">public class ZooKeeperConnector &#123;</span><br><span class="line">    private Logger logger = LoggerFactory.getLogger(this.getClass());</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 连接IP端口信息，格式为：10.1.74.75:2281,10.1.74.75:2282,10.1.74.75:2283</span><br><span class="line">     */</span><br><span class="line">    private String hosts;</span><br><span class="line"></span><br><span class="line">    private CuratorFramework client;</span><br><span class="line"></span><br><span class="line">    private static final int DEFAULT_SESSION_TIMEOUT_MS = 30 * 1000;</span><br><span class="line">    private static final int DEFAULT_CONNECTION_TIMEOUT_MS = 10 * 1000;</span><br><span class="line"></span><br><span class="line">    private int sessionTimeout = DEFAULT_SESSION_TIMEOUT_MS;</span><br><span class="line">    private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_MS;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 连接ZooKeeper</span><br><span class="line">     */</span><br><span class="line">    public void connect() &#123;</span><br><span class="line">        RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);</span><br><span class="line">        client = CuratorFrameworkFactory.newClient(hosts, sessionTimeout, connectionTimeout, retryPolicy);</span><br><span class="line">        client.start();</span><br><span class="line">        logger.info(&quot;Successfully connected to Zookeeper [&#123;&#125;] &quot;, hosts);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 关闭ZooKeeper的连接</span><br><span class="line">     */</span><br><span class="line">    public void close() &#123;</span><br><span class="line">        CloseableUtils.closeQuietly(client);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 重连</span><br><span class="line">     *</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public CuratorFramework reConnect() &#123;</span><br><span class="line">        connect();</span><br><span class="line">        return client;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public String getHosts() &#123;</span><br><span class="line">        return hosts;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void setHosts(String hosts) &#123;</span><br><span class="line">        this.hosts = hosts;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public CuratorFramework getClient() &#123;</span><br><span class="line">        if (client == null) &#123;</span><br><span class="line">            connect();</span><br><span class="line">        &#125;</span><br><span class="line">        return client;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void setClient(CuratorFramework client) &#123;</span><br><span class="line">        this.client = client;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public int getSessionTimeout() &#123;</span><br><span class="line">        return sessionTimeout;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void setSessionTimeout(int sessionTimeout) &#123;</span><br><span class="line">        this.sessionTimeout = sessionTimeout;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public int getConnectionTimeout() &#123;</span><br><span class="line">        return connectionTimeout;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void setConnectionTimeout(int connectionTimeout) &#123;</span><br><span class="line">        this.connectionTimeout = connectionTimeout;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>2、创建AccountLock.java<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br></pre></td><td class="code"><pre><span class="line">package com.robot.zookeeper.utils;</span><br><span class="line"></span><br><span class="line">import com.robot.zookeeper.components.ZooKeeperConnector;</span><br><span class="line">import org.apache.curator.framework.recipes.locks.InterProcessMutex;</span><br><span class="line">import org.slf4j.Logger;</span><br><span class="line">import org.slf4j.LoggerFactory;</span><br><span class="line"></span><br><span class="line">import java.util.concurrent.TimeUnit;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * @author: 会跳舞的机器人</span><br><span class="line"> * @date: 2017/6/22 10:16</span><br><span class="line"> * @description:账户分布式锁</span><br><span class="line"> */</span><br><span class="line">public class AccountLock &#123;</span><br><span class="line">    private Logger logger = LoggerFactory.getLogger(this.getClass());</span><br><span class="line">    /**</span><br><span class="line">     * 共享锁</span><br><span class="line">     */</span><br><span class="line">    InterProcessMutex lock;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 是否获取到锁</span><br><span class="line">     */</span><br><span class="line">    boolean wasAcquired = false;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 构造器</span><br><span class="line">     *</span><br><span class="line">     * @param path</span><br><span class="line">     * @param zooKeeperConnector</span><br><span class="line">     */</span><br><span class="line">    public AccountLock(String path, ZooKeeperConnector zooKeeperConnector) &#123;</span><br><span class="line">        lock = new InterProcessMutex(zooKeeperConnector.getClient(), path);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 尝试加锁并等待</span><br><span class="line">     *</span><br><span class="line">     * @param timeOut 超时时间（秒），-1表示不等待</span><br><span class="line">     * @return true表示获取锁成功，false表示获取锁失败</span><br><span class="line">     */</span><br><span class="line">    public boolean acquire(int timeOut) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            if (timeOut == -1) &#123;</span><br><span class="line">                wasAcquired = lock.acquire(-1, null);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                wasAcquired = lock.acquire(timeOut, TimeUnit.SECONDS);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            logger.error(&quot;Get lock time out error&quot;, e.getMessage());</span><br><span class="line">            wasAcquired = false;</span><br><span class="line">        &#125;</span><br><span class="line">        return wasAcquired;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 尝试加锁并等待</span><br><span class="line">     *</span><br><span class="line">     * @param timeOut  timeOut 超时时间，-1表示不等待</span><br><span class="line">     * @param timeUnit 超时时间单位</span><br><span class="line">     * @return true表示获取锁成功，false表示获取锁失败</span><br><span class="line">     */</span><br><span class="line">    public boolean acquire(int timeOut, TimeUnit timeUnit) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            wasAcquired = lock.acquire(timeOut, timeUnit);</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            logger.error(&quot;Get lock time out error&quot;, e.getMessage());</span><br><span class="line">            wasAcquired = false;</span><br><span class="line">        &#125;</span><br><span class="line">        return wasAcquired;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 释放锁</span><br><span class="line">     */</span><br><span class="line">    public void release() &#123;</span><br><span class="line">        if (wasAcquired) &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                lock.release();</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                logger.error(&quot;release lock error&quot;, e.getMessage());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>3、测试类<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">package com.robot.zookeeper;</span><br><span class="line"></span><br><span class="line">import com.robot.zookeeper.components.ZooKeeperConnector;</span><br><span class="line">import com.robot.zookeeper.utils.AccountLock;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * @author: 会跳舞的机器人</span><br><span class="line"> * @date: 2017/6/22 10:34</span><br><span class="line"> * @description:</span><br><span class="line"> */</span><br><span class="line">public class Test &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        final ZooKeeperConnector zooKeeperConnector = new ZooKeeperConnector();</span><br><span class="line">        zooKeeperConnector.setHosts(&quot;192.168.133.128:2181,192.168.133.129:2182,192.168.133.130:2183&quot;);</span><br><span class="line">        zooKeeperConnector.connect();</span><br><span class="line"></span><br><span class="line">        /**</span><br><span class="line">         * 创建4个线程去获取锁</span><br><span class="line">         */</span><br><span class="line">        for (int i = 1; i &lt; 5; i++) &#123;</span><br><span class="line">            Thread thread = new Thread() &#123;</span><br><span class="line">                @Override</span><br><span class="line">                public void run() &#123;</span><br><span class="line">                    AccountLock accountLock = new AccountLock(&quot;/ACCOUNT/221890&quot;, zooKeeperConnector);</span><br><span class="line">                    boolean wasAcquired = accountLock.acquire(10);</span><br><span class="line">                    if (wasAcquired) &#123;</span><br><span class="line">                        System.out.println(&quot;线程&quot; + Thread.currentThread().getName() + &quot;获取到锁&quot;);</span><br><span class="line">                        try &#123;</span><br><span class="line">                            Thread.sleep(3000);</span><br><span class="line">                        &#125; catch (InterruptedException e) &#123;</span><br><span class="line">                            e.printStackTrace();</span><br><span class="line">                        &#125;</span><br><span class="line">                        accountLock.release();</span><br><span class="line">                        System.out.println(&quot;线程&quot; + Thread.currentThread().getName() + &quot;释放锁&quot;);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;;</span><br><span class="line">            thread.start();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>输出结果：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">线程Thread-3获取到锁</span><br><span class="line">线程Thread-3释放锁</span><br><span class="line">线程Thread-4获取到锁</span><br><span class="line">线程Thread-4释放锁</span><br><span class="line">线程Thread-2获取到锁</span><br><span class="line">线程Thread-2释放锁</span><br><span class="line">线程Thread-1获取到锁</span><br><span class="line">线程Thread-1释放锁</span><br></pre></td></tr></table></figure></p>
+<p>账户加锁的时候，我们针对用户的ID进行加锁，在测试类中，我们创建了4个线程去获取锁，从输出结果可以看出每次只有一个线程能获取到锁，并且在该线程释放锁之后，其他的线程才能获取到锁。</p>
+<p>当然，测试类中的ZooKeeperConnector的初始化一般都是通过Spring进行管理<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;beans&gt;</span><br><span class="line">	&lt;bean id=&quot;zkConnector&quot; class=&quot;com.baibei.component.zk.ZooKeeperConnector&quot;</span><br><span class="line">		init-method=&quot;connect&quot; lazy-init=&quot;false&quot;&gt;</span><br><span class="line">		&lt;property name=&quot;hosts&quot; value=&quot;#&#123;environment[&apos;ZOOKEEPER.CONNECTION.HOSTS&apos;]&#125;&quot; /&gt;</span><br><span class="line">	&lt;/bean&gt;</span><br><span class="line">&lt;/beans&gt;</span><br></pre></td></tr></table></figure></p>
+<p>Demo中所需要的maven配置如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">           &lt;groupId&gt;org.apache.curator&lt;/groupId&gt;</span><br><span class="line">           &lt;artifactId&gt;curator-framework&lt;/artifactId&gt;</span><br><span class="line">           &lt;version&gt;2.10.0&lt;/version&gt;</span><br><span class="line">       &lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">       &lt;dependency&gt;</span><br><span class="line">           &lt;groupId&gt;org.apache.curator&lt;/groupId&gt;</span><br><span class="line">           &lt;artifactId&gt;curator-recipes&lt;/artifactId&gt;</span><br><span class="line">           &lt;version&gt;2.10.0&lt;/version&gt;</span><br><span class="line">       &lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">       &lt;!-- curator的内嵌包版本存在问题，所以用这个版本来替代--&gt;</span><br><span class="line">       &lt;dependency&gt;</span><br><span class="line">           &lt;groupId&gt;com.google.guava&lt;/groupId&gt;</span><br><span class="line">           &lt;artifactId&gt;guava&lt;/artifactId&gt;</span><br><span class="line">           &lt;version&gt;18.0&lt;/version&gt;</span><br><span class="line">       &lt;/dependency&gt;</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>如果您觉得有帮助到您，不妨考虑请作者喝杯咖啡鼓励一下。</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/uploads/weixin.png" alt="会跳舞的机器人 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/uploads/alipay.png" alt="会跳舞的机器人 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者：</strong>
+    会跳舞的机器人
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://dancing-robots.vip/2017/11/28/ZooKeeper分布式锁应用/" title="ZooKeeper分布式锁应用">http://dancing-robots.vip/2017/11/28/ZooKeeper分布式锁应用/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/ZooKeeper/" rel="tag"># ZooKeeper</a>
+          
+            <a href="/tags/分布式锁/" rel="tag"># 分布式锁</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/11/28/Zookeeper集群搭建/" rel="next" title="ZooKeeper集群搭建">
+                <i class="fa fa-chevron-left"></i> ZooKeeper集群搭建
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/11/28/ZooKeeper典型应用场景一览（转）/" rel="prev" title="ZooKeeper典型应用场景一览（转）">
+                ZooKeeper典型应用场景一览（转） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+<span class="jiathis_txt">分享到：</span>
+<a class="jiathis_button_fav">收藏夹</a>
+<a class="jiathis_button_copy">复制网址</a>
+<a class="jiathis_button_email">邮件</a>
+<a class="jiathis_button_weixin">微信</a>
+<a class="jiathis_button_qzone">QQ空间</a>
+<a class="jiathis_button_tqq">腾讯微博</a>
+<a class="jiathis_button_douban">豆瓣</a>
+<a class="jiathis_button_share">一键分享</a>
+
+<a href="http://www.jiathis.com/share?uid=2140465" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+var jiathis_config={
+  data_track_clickback:true,
+  summary:"",
+  shortUrl:false,
+  hideMore:false
+}
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMTk2Ny84NTMx"></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/uploads/avatar.jpg"
+                alt="会跳舞的机器人" />
+            
+              <p class="site-author-name" itemprop="name">会跳舞的机器人</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">32</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">24</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://gitee.com/dancing_robot" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:2268549298@qq.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://www.jianshu.com/u/21c249f3c8d0" target="_blank" title="简书">
+                    
+                      <i class="fa fa-fw fa-rocket"></i>简书</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="undefined" target="_blank" title="知乎">
+                    
+                      <i class="fa fa-fw fa-globe"></i>知乎</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#一、Zookeeper是什么"><span class="nav-number">1.</span> <span class="nav-text">一、Zookeeper是什么</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#二、Zookeeper分布式锁的实现原理"><span class="nav-number">2.</span> <span class="nav-text">二、Zookeeper分布式锁的实现原理</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#unlock过程"><span class="nav-number">2.1.</span> <span class="nav-text">unlock过程</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#三、Zookeeper分布式锁应用"><span class="nav-number">3.</span> <span class="nav-text">三、Zookeeper分布式锁应用</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#使用场景"><span class="nav-number">3.0.1.</span> <span class="nav-text">使用场景</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">会跳舞的机器人</span>
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

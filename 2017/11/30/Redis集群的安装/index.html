@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Redis," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="一、基本介绍Redis集群至少需要3个主节点，要保证Redis的高可用性，那每个主节点至少需要一个从节点（如果没有从节点，那集群中的某个主节点挂掉了，那这个节点中的数据也就获取不到了），所以Redis集群就至少需要6个节点，3个主节点，3个从节点。">
+<meta name="keywords" content="Redis">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis集群的安装">
+<meta property="og:url" content="http://dancing-robots.vip/2017/11/30/Redis集群的安装/index.html">
+<meta property="og:site_name" content="会跳舞的机器人的博客">
+<meta property="og:description" content="一、基本介绍Redis集群至少需要3个主节点，要保证Redis的高可用性，那每个主节点至少需要一个从节点（如果没有从节点，那集群中的某个主节点挂掉了，那这个节点中的数据也就获取不到了），所以Redis集群就至少需要6个节点，3个主节点，3个从节点。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2591074-34abaa20080740c9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2591074-d26f342de30bbe8c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2017-11-30T08:47:50.314Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Redis集群的安装">
+<meta name="twitter:description" content="一、基本介绍Redis集群至少需要3个主节点，要保证Redis的高可用性，那每个主节点至少需要一个从节点（如果没有从节点，那集群中的某个主节点挂掉了，那这个节点中的数据也就获取不到了），所以Redis集群就至少需要6个节点，3个主节点，3个从节点。">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/2591074-34abaa20080740c9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '会跳舞的机器人'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://dancing-robots.vip/2017/11/30/Redis集群的安装/"/>
+
+
+
+
+
+  <title>Redis集群的安装 | 会跳舞的机器人的博客</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?e7f886ef194c449e0378c1c818837846";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">会跳舞的机器人的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">就像人生，不过是一场即兴。</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-主页">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            主页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-美食">
+          <a href="/美食列表/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heart"></i> <br />
+            
+            美食
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-分类">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-标签">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-归档">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-关于">
+          <a href="/关于我/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-留言板">
+          <a href="/留言板/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-comments"></i> <br />
+            
+            留言板
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://dancing-robots.vip/2017/11/30/Redis集群的安装/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="会跳舞的机器人">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="会跳舞的机器人的博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Redis集群的安装</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T16:47:06+08:00">
+                2017-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Redis/" itemprop="url" rel="index">
+                    <span itemprop="name">Redis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="一、基本介绍"><a href="#一、基本介绍" class="headerlink" title="一、基本介绍"></a>一、基本介绍</h3><p>Redis集群至少需要3个主节点，要保证Redis的高可用性，那每个主节点至少需要一个从节点（如果没有从节点，那集群中的某个主节点挂掉了，那这个节点中的数据也就获取不到了），所以Redis集群就至少需要6个节点，3个主节点，3个从节点。</p>
+<a id="more"></a>
+<p>Redis集群的数据共享</p>
+<p>Redis 集群使用数据分片（sharding）而非一致性哈希（consistency hashing）来实现：</p>
+<p>一个 Redis 集群包含 16384 个哈希槽（hash slot）， 数据库中的每个键都属于这 16384 个哈希槽的其中一个， 集群使用公式 CRC16(key) % 16384 来计算键 key 属于哪个槽， 其中CRC16(key) 语句用于计算键 key 的 CRC16 校验和 。</p>
+<p>集群中的每个节点负责处理一部分哈希槽。 举个例子， 一个集群可以有三个哈希槽， 其中：</p>
+<ul>
+<li>节点 A 负责处理 0 号至 5500 号哈希槽。</li>
+<li>节点 B 负责处理 5501 号至 11000 号哈希槽。</li>
+<li>节点 C 负责处理 11001 号至 16384 号哈希槽。</li>
+</ul>
+<p>这种将哈希槽分布到不同节点的做法使得用户可以很容易地向集群中添加或者删除节点。 比如说：如果用户将新节点 D 添加到集群中， 那么集群只需要将节点 A 、B 、 C 中的某些槽移动到节点 D 就可以了。</p>
+<p>与此类似， 如果用户要从集群中移除节点 A ， 那么集群只需要将节点 A 中的所有哈希槽移动到节点 B 和节点 C ， 然后再移除空白（不包含任何哈希槽）的节点 A 就可以了。<br>因为将一个哈希槽从一个节点移动到另一个节点不会造成节点阻塞， 所以无论是添加新节点还是移除已存在节点， 又或者改变某个节点包含的哈希槽数量， 都不会造成集群下线。<br>所以每次往Redis中set值的时候，会根据Redis的计算规则算出这个这个值的哈希值，然后再把数据放到对应处理这个哈希值的节点上，获取数据的时候也是一样的道理。</p>
+<h3 id="二、安装"><a href="#二、安装" class="headerlink" title="二、安装"></a>二、安装</h3><h4 id="1、服务器规划"><a href="#1、服务器规划" class="headerlink" title="1、服务器规划"></a>1、服务器规划</h4><p>注意：端口的规划请事先确认好是否已经被占用，建议各个服务器对应端口的数值带有一定的规律性，便于安装和维护</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/2591074-34abaa20080740c9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="Paste_Image.png"></p>
+<h4 id="2、在对应的服务器中打开对应的端口"><a href="#2、在对应的服务器中打开对应的端口" class="headerlink" title="2、在对应的服务器中打开对应的端口"></a>2、在对应的服务器中打开对应的端口</h4><p>切换至root用户<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># vi /etc/sysconfig/iptables</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.143中增加：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">## redis </span><br><span class="line">-A INPUT -m state --state NEW -m tcp -p tcp --dport 7111 -j ACCEPT</span><br><span class="line">-A INPUT -m state --state NEW -m tcp -p tcp --dport 17111 -j ACCEPT</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.103中增加：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">## redis </span><br><span class="line">-A INPUT -m state --state NEW -m tcp -p tcp --dport 7112 -j ACCEPT</span><br><span class="line">-A INPUT -m state --state NEW -m tcp -p tcp --dport 17112 -j ACCEPT</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.154中增加：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">## redis </span><br><span class="line">-A INPUT -m state --state NEW -m tcp -p tcp --dport 7113 -j ACCEPT</span><br><span class="line">-A INPUT -m state --state NEW -m tcp -p tcp --dport 17113 -j ACCEPT</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.117中增加：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">## redis </span><br><span class="line">-A INPUT -m state --state NEW -m tcp -p tcp --dport 7114 -j ACCEPT</span><br><span class="line">-A INPUT -m state --state NEW -m tcp -p tcp --dport 17114 -j ACCEPT</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.146中增加：<br><code>## redis 
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 7115 -j ACCEPT
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 17115 -j ACCEPT</code><br>192.168.31.173中增加：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">## redis </span><br><span class="line">-A INPUT -m state --state NEW -m tcp -p tcp --dport 7116 -j ACCEPT</span><br><span class="line">-A INPUT -m state --state NEW -m tcp -p tcp --dport 17116 -j ACCEPT</span><br></pre></td></tr></table></figure></p>
+<p>在各个服务器增加完端口后，进行端口配置重启<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># service iptables restart</span><br></pre></td></tr></table></figure></p>
+<p>下面对Redis进行安装，安装目录：/usr/local/redis3，安装用户：root</p>
+<h4 id="3、编译和安装所需要的包"><a href="#3、编译和安装所需要的包" class="headerlink" title="3、编译和安装所需要的包"></a>3、编译和安装所需要的包</h4><p><code># yum install gcc tcl</code></p>
+<h4 id="4、下载或者上传Redis3的最新稳定版本到-usr-local-src"><a href="#4、下载或者上传Redis3的最新稳定版本到-usr-local-src" class="headerlink" title="4、下载或者上传Redis3的最新稳定版本到/usr/local/src"></a>4、下载或者上传Redis3的最新稳定版本到/usr/local/src</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># cd /usr/local/src</span><br><span class="line"># wget http://download.redis.io/releases/redis-3.0.3.tar.gz</span><br></pre></td></tr></table></figure>
+<h4 id="5、创建安装目录："><a href="#5、创建安装目录：" class="headerlink" title="5、创建安装目录："></a>5、创建安装目录：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># mkdir /usr/local/redis3</span><br></pre></td></tr></table></figure>
+<h4 id="6、解压并进入目录"><a href="#6、解压并进入目录" class="headerlink" title="6、解压并进入目录"></a>6、解压并进入目录</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># tar -zxvf redis-3.0.3.tar.gz</span><br><span class="line"># cd redis-3.0.3</span><br></pre></td></tr></table></figure>
+<h4 id="7、编译安装（使用PREFIX指定安装目录）"><a href="#7、编译安装（使用PREFIX指定安装目录）" class="headerlink" title="7、编译安装（使用PREFIX指定安装目录）"></a>7、编译安装（使用PREFIX指定安装目录）</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># make PREFIX=/usr/local/redis3 install</span><br></pre></td></tr></table></figure>
+<p>安装完成后，可以看到/usr/local/redis3目录下有一个bin目录，bin目录里面就是redis的命令脚本，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-benchmark  redis-check-aof  redis-check-dump  redis-cli  redis-sentinel  redis-server</span><br></pre></td></tr></table></figure></p>
+<p>以上步骤在每台机器上都要执行安装</p>
+<p>####8、创建集群配置目录，并拷贝redis.conf配置文件到各个节点配置目录</p>
+<p>192.168.31.143<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># mkdir -p /usr/local/redis3/cluster/7111</span><br><span class="line"># cp /usr/local/src/redis3.0/redis.conf /usr/local/redis3/cluster/7111/redis-7111.conf</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.103<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># mkdir -p /usr/local/redis3/cluster/7112</span><br><span class="line"># cp /usr/local/src/redis-3.0.3/redis.conf /usr/local/redis3/cluster/7112/redis-7112.conf</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.154<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># mkdir -p /usr/local/redis3/cluster/7113</span><br><span class="line"># cp /usr/local/src/redis-3.0.3/redis.conf /usr/local/redis3/cluster/7113/redis-7113.conf</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.117<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># mkdir -p /usr/local/redis3/cluster/7114</span><br><span class="line"># cp /usr/local/src/redis-3.0.3/redis.conf /usr/local/redis3/cluster/7114/redis-7114.conf</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.146<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># mkdir -p /usr/local/redis3/cluster/7115</span><br><span class="line"># cp /usr/local/src/redis-3.0.3/redis.conf /usr/local/redis3/cluster/7115/redis-7115.conf</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.173<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># mkdir -p /usr/local/redis3/cluster/7116</span><br><span class="line"># cp /usr/local/src/redis-3.0.3/redis.conf /usr/local/redis3/cluster/7116/redis-7116.conf</span><br></pre></td></tr></table></figure></p>
+<h4 id="9、修改6个节点的redis-conf配置文件内容"><a href="#9、修改6个节点的redis-conf配置文件内容" class="headerlink" title="9、修改6个节点的redis.conf配置文件内容"></a>9、修改6个节点的redis.conf配置文件内容</h4><p><img src="http://upload-images.jianshu.io/upload_images/2591074-d26f342de30bbe8c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="Paste_Image.png">使用以下命令逐个启动这6个Redis节点实例</p>
+<p>192.168.31.143<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># /usr/local/redis3/bin/redis-server /usr/local/redis3/cluster/7111/redis-7111.conf</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.103<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># /usr/local/redis3/bin/redis-server /usr/local/redis3/cluster/7112/redis-7112.conf</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.154<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># /usr/local/redis3/bin/redis-server /usr/local/redis3/cluster/7113/redis-7113.conf</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.117<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># /usr/local/redis3/bin/redis-server /usr/local/redis3/cluster/7114/redis-7114.conf</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.146<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># /usr/local/redis3/bin/redis-server /usr/local/redis3/cluster/7115/redis-7115.conf</span><br></pre></td></tr></table></figure></p>
+<p>192.168.31.173<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># /usr/local/redis3/bin/redis-server /usr/local/redis3/cluster/7116/redis-7116.conf</span><br></pre></td></tr></table></figure></p>
+<p>逐个启动后，可以用ps -ef|grep redis命令来检测是否启动成功<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">root       3273      1  3 15:18 ?        00:00:00 /usr/local/redis3/bin/redis-server *:7111 [cluster]</span><br></pre></td></tr></table></figure></p>
+<p>接下来准备创建集群</p>
+<p>####10、安装ruby和rubygems（注意：需要ruby的版本在1.8.7及以上）<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># yum install ruby rubygems</span><br></pre></td></tr></table></figure></p>
+<p>查看ruby的版本信息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># ruby -v</span><br><span class="line">ruby 1.8.7 (2013-06-27 patchlevel 374) [x86_64-linux]</span><br></pre></td></tr></table></figure></p>
+<h4 id="11、gem安装redis-ruby接口"><a href="#11、gem安装redis-ruby接口" class="headerlink" title="11、gem安装redis ruby接口"></a>11、gem安装redis ruby接口</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># gem install redis</span><br></pre></td></tr></table></figure>
+<p>出现如下信息：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Successfully installed redis-3.3.1</span><br><span class="line">1 gem installed</span><br><span class="line">Installing ri documentation for redis-3.3.1...</span><br><span class="line">Installing RDoc documentation for redis-3.3.1...</span><br></pre></td></tr></table></figure></p>
+<h4 id="12、执行Redis集群创建命令（只需要在其中一个节点上执行即可）"><a href="#12、执行Redis集群创建命令（只需要在其中一个节点上执行即可）" class="headerlink" title="12、执行Redis集群创建命令（只需要在其中一个节点上执行即可）"></a>12、执行Redis集群创建命令（只需要在其中一个节点上执行即可）</h4><p>拷贝集群创建文件：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># cp /usr/local/src/redis-3.0.3/src/redis-trib.rb /usr/local/bin/redis-trib</span><br></pre></td></tr></table></figure></p>
+<p>执行集群创建脚本：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># redis-trib create --replicas 1 192.168.31.117:7114 192.168.31.146:7115 192.168.31.173:7116 192.168.31.143:7111 192.168.31.103:7112 192.168.31.154:7113</span><br></pre></td></tr></table></figure></p>
+<p>集群创建过程说明：<br>给定redis-trib程序的命令是create，这表示我们希望创建一个新的集群，–replicas 1表示每个主节点下面有一个从节点，后面的参数则是redis实例的地址列表，程序使用这些地址所指示的实例来创建新的集群。<br>在第一次执行的时候，输出信息如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; Creating cluster</span><br><span class="line">Connecting to node 192.168.31.117:7114: OK</span><br><span class="line">Connecting to node 192.168.31.146:7115: OK</span><br><span class="line">Connecting to node 192.168.31.173:7116: OK</span><br><span class="line">Connecting to node 192.168.31.143:7111: OK</span><br><span class="line">Connecting to node 192.168.31.103:7112: OK</span><br><span class="line">Connecting to node 192.168.31.154:7113: OK</span><br><span class="line">&gt;&gt;&gt; Performing hash slots allocation on 6 nodes...</span><br><span class="line">Using 3 masters:</span><br><span class="line">192.168.31.154:7113</span><br><span class="line">192.168.31.173:7116</span><br><span class="line">192.168.31.143:7111</span><br><span class="line">Adding replica 192.168.31.146:7115 to 192.168.31.154:7113</span><br><span class="line">Adding replica 192.168.31.117:7114 to 192.168.31.173:7116</span><br><span class="line">Adding replica 192.168.31.103:7112 to 192.168.31.143:7111</span><br><span class="line">S: 26a53ca5649a85d75d7f78c17897846fad8548c3 192.168.31.117:7114</span><br><span class="line">   replicates 3dc26de1ddb9304dc3451e7044c91b3fd5cb77b9</span><br><span class="line">S: 51dfb182af4fdc33c69218fe6f8421c0311f67f0 192.168.31.146:7115</span><br><span class="line">   replicates e9b5cd667523705b7f4052dd847a45c9abd4ff2e</span><br><span class="line">M: 3dc26de1ddb9304dc3451e7044c91b3fd5cb77b9 192.168.31.173:7116</span><br><span class="line">   slots:5461-10922 (5462 slots) master</span><br><span class="line">M: 45d00776095446fcf7e194a53e50311da4e2c87e 192.168.31.143:7111</span><br><span class="line">   slots:10923-16383 (5461 slots) master</span><br><span class="line">S: aa1577c0295783245870e114ffdcabd0ee9bfd07 192.168.31.103:7112</span><br><span class="line">   replicates 45d00776095446fcf7e194a53e50311da4e2c87e</span><br><span class="line">M: e9b5cd667523705b7f4052dd847a45c9abd4ff2e 192.168.31.154:7113</span><br><span class="line">   slots:0-5460 (5461 slots) master</span><br><span class="line">Can I set the above configuration? (type &apos;yes&apos; to accept):</span><br></pre></td></tr></table></figure></p>
+<p>从以上信息可以看到master节点为7111、7113、7116，这和我们预先计划的不一致，预先计划的master节点是7111、7112、7113，所以在确认这一步，我们输入no，然后再执行上面的脚本，在试过几次后终于得到了我们预想的设置（好像是随机的，没有规律，这一步要注意核对主从关系是否是你所预想的）<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; Creating cluster</span><br><span class="line">Connecting to node 192.168.31.117:7114: OK</span><br><span class="line">Connecting to node 192.168.31.146:7115: OK</span><br><span class="line">Connecting to node 192.168.31.173:7116: OK</span><br><span class="line">Connecting to node 192.168.31.143:7111: OK</span><br><span class="line">Connecting to node 192.168.31.103:7112: OK</span><br><span class="line">Connecting to node 192.168.31.154:7113: OK</span><br><span class="line">&gt;&gt;&gt; Performing hash slots allocation on 6 nodes...</span><br><span class="line">Using 3 masters:</span><br><span class="line">192.168.31.103:7112</span><br><span class="line">192.168.31.154:7113</span><br><span class="line">192.168.31.143:7111</span><br><span class="line">Adding replica 192.168.31.146:7115 to 192.168.31.103:7112</span><br><span class="line">Adding replica 192.168.31.173:7116 to 192.168.31.154:7113</span><br><span class="line">Adding replica 192.168.31.117:7114 to 192.168.31.143:7111</span><br><span class="line">S: 26a53ca5649a85d75d7f78c17897846fad8548c3 192.168.31.117:7114</span><br><span class="line">   replicates 45d00776095446fcf7e194a53e50311da4e2c87e</span><br><span class="line">S: 51dfb182af4fdc33c69218fe6f8421c0311f67f0 192.168.31.146:7115</span><br><span class="line">   replicates aa1577c0295783245870e114ffdcabd0ee9bfd07</span><br><span class="line">S: 3dc26de1ddb9304dc3451e7044c91b3fd5cb77b9 192.168.31.173:7116</span><br><span class="line">   replicates e9b5cd667523705b7f4052dd847a45c9abd4ff2e</span><br><span class="line">M: 45d00776095446fcf7e194a53e50311da4e2c87e 192.168.31.143:7111</span><br><span class="line">   slots:10923-16383 (5461 slots) master</span><br><span class="line">M: aa1577c0295783245870e114ffdcabd0ee9bfd07 192.168.31.103:7112</span><br><span class="line">   slots:0-5460 (5461 slots) master</span><br><span class="line">M: e9b5cd667523705b7f4052dd847a45c9abd4ff2e 192.168.31.154:7113</span><br><span class="line">   slots:5461-10922 (5462 slots) master</span><br><span class="line">Can I set the above configuration? (type &apos;yes&apos; to accept):</span><br></pre></td></tr></table></figure></p>
+<p>输入yes，集群就会将配置应用到各个节点，并join各个节点，让各个节点开始通讯，输出如下信息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; Nodes configuration updated</span><br><span class="line">&gt;&gt;&gt; Assign a different config epoch to each node</span><br><span class="line">&gt;&gt;&gt; Sending CLUSTER MEET messages to join the cluster</span><br><span class="line">Waiting for the cluster to join.....</span><br><span class="line">&gt;&gt;&gt; Performing Cluster Check (using node 192.168.31.117:7114)</span><br><span class="line">M: 26a53ca5649a85d75d7f78c17897846fad8548c3 192.168.31.117:7114</span><br><span class="line">   slots: (0 slots) master</span><br><span class="line">   replicates 45d00776095446fcf7e194a53e50311da4e2c87e</span><br><span class="line">M: 51dfb182af4fdc33c69218fe6f8421c0311f67f0 192.168.31.146:7115</span><br><span class="line">   slots: (0 slots) master</span><br><span class="line">   replicates aa1577c0295783245870e114ffdcabd0ee9bfd07</span><br><span class="line">M: 3dc26de1ddb9304dc3451e7044c91b3fd5cb77b9 192.168.31.173:7116</span><br><span class="line">   slots: (0 slots) master</span><br><span class="line">   replicates e9b5cd667523705b7f4052dd847a45c9abd4ff2e</span><br><span class="line">M: 45d00776095446fcf7e194a53e50311da4e2c87e 192.168.31.143:7111</span><br><span class="line">   slots:10923-16383 (5461 slots) master</span><br><span class="line">M: aa1577c0295783245870e114ffdcabd0ee9bfd07 192.168.31.103:7112</span><br><span class="line">   slots:0-5460 (5461 slots) master</span><br><span class="line">M: e9b5cd667523705b7f4052dd847a45c9abd4ff2e 192.168.31.154:7113</span><br><span class="line">   slots:5461-10922 (5462 slots) master</span><br><span class="line">[OK] All nodes agree about slots configuration.</span><br><span class="line">&gt;&gt;&gt; Check for open slots...</span><br><span class="line">&gt;&gt;&gt; Check slots coverage...</span><br><span class="line">[OK] All 16384 slots covered.</span><br></pre></td></tr></table></figure></p>
+<p>可以看出：</p>
+<ul>
+<li>192.168.31.117:7114从节点所属的主节点为192.168.31.143:7111</li>
+<li>192.168.31.146:7115从节点所属的主节点为192.168.31.103:7112</li>
+<li>192.168.31.173:7116从节点所属的主节点为192.168.31.154:7113（通过replicates 后面的值去匹配，相当于外键ID）</li>
+<li>192.168.31.103:7112分配的槽点是是0-5460段</li>
+<li>192.168.31.154:7113分配的槽点是5461-10922段</li>
+<li>192.168.31.143:7111分配的槽点是10923-16383段</li>
+</ul>
+<p>集群中的每个节点负责处理一部分哈希槽，<br>最后一行信息表示集群中的16384个槽都有至少一个主节点在处理，集群运行正常</p>
+<h4 id="13、查看redis集群的从属状态关系"><a href="#13、查看redis集群的从属状态关系" class="headerlink" title="13、查看redis集群的从属状态关系"></a>13、查看redis集群的从属状态关系</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># /usr/local/redis3/bin/redis-cli -p 7111 cluster nodes</span><br></pre></td></tr></table></figure>
+<p>输出：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">26a53ca5649a85d75d7f78c17897846fad8548c3 192.168.31.117:7114 slave 45d00776095446fcf7e194a53e50311da4e2c87e 0 1471133132198 4 connected</span><br><span class="line"></span><br><span class="line">3dc26de1ddb9304dc3451e7044c91b3fd5cb77b9 192.168.31.173:7116 slave e9b5cd667523705b7f4052dd847a45c9abd4ff2e 0 1471133130178 6 connected</span><br><span class="line"></span><br><span class="line">aa1577c0295783245870e114ffdcabd0ee9bfd07 192.168.31.103:7112 master - 0 1471133133207 5 connected 0-5460</span><br><span class="line"></span><br><span class="line">51dfb182af4fdc33c69218fe6f8421c0311f67f0 192.168.31.146:7115 slave aa1577c0295783245870e114ffdcabd0ee9bfd07 0 1471133134217 5 connected</span><br><span class="line"></span><br><span class="line">45d00776095446fcf7e194a53e50311da4e2c87e 192.168.31.143:7111 myself,master - 0 0 4 connected 10923-16383</span><br><span class="line"></span><br><span class="line">e9b5cd667523705b7f4052dd847a45c9abd4ff2e 192.168.31.154:7113 master - 0 1471133131189 6 connected 5461-10922</span><br></pre></td></tr></table></figure></p>
+<h4 id="14、集群的简单测试"><a href="#14、集群的简单测试" class="headerlink" title="14、集群的简单测试"></a>14、集群的简单测试</h4><p>随便挑一个节点，启动redis终端<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># /usr/local/redis3/bin/redis-cli -c -p 7114</span><br><span class="line">127.0.0.1:7114&gt; set key1 dreyer</span><br><span class="line">-&gt; Redirected to slot [9189] located at 192.168.31.154:7113</span><br><span class="line">OK</span><br><span class="line">192.168.31.154:7113&gt; get key1</span><br><span class="line">&quot;dreyer&quot;</span><br><span class="line">192.168.31.154:7113&gt;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到set的key重定向192.168.31.154:711这个节点，因为redis集群会有一个使用公式CRC16(key) % 16384来计算key属于哪个槽</p>
+<p>我们切换到192.168.31.154:7113这个节点上来获取刚刚设置key的值，因为设置的key值就落在这个节点上，所以能直接获取到数据<br><figure class="highlight plain"><figcaption><span>/usr/local/redis3/bin/redis-cli -c -p 7113</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:7113&gt; get key1</span><br><span class="line">&quot;dreyer&quot;</span><br></pre></td></tr></table></figure></p>
+<p>我们再切换到192.168.31.143:7111这个节点上来获取刚刚设置的key值<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># /usr/local/redis3/bin/redis-cli -c -p 7111`</span><br><span class="line">127.0.0.1:7111&gt; get key1</span><br><span class="line">-&gt; Redirected to slot [9189] located at 192.168.31.154:7113</span><br><span class="line">&quot;dreyer&quot;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到这7111这个节点获取数据的时候，会重定向至192.168.31.154:7113节点上获取数据</p>
+<p>至此，完成！</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>如果您觉得有帮助到您，不妨考虑请作者喝杯咖啡鼓励一下。</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/uploads/weixin.png" alt="会跳舞的机器人 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/uploads/alipay.png" alt="会跳舞的机器人 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者：</strong>
+    会跳舞的机器人
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://dancing-robots.vip/2017/11/30/Redis集群的安装/" title="Redis集群的安装">http://dancing-robots.vip/2017/11/30/Redis集群的安装/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Redis/" rel="tag"># Redis</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/11/30/RabbitMQ简介以及应用/" rel="next" title="RabbitMQ简介以及应用">
+                <i class="fa fa-chevron-left"></i> RabbitMQ简介以及应用
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/11/30/JedisHelper——Redis客户端简单封装/" rel="prev" title="JedisHelper——Redis客户端简单封装">
+                JedisHelper——Redis客户端简单封装 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+<span class="jiathis_txt">分享到：</span>
+<a class="jiathis_button_fav">收藏夹</a>
+<a class="jiathis_button_copy">复制网址</a>
+<a class="jiathis_button_email">邮件</a>
+<a class="jiathis_button_weixin">微信</a>
+<a class="jiathis_button_qzone">QQ空间</a>
+<a class="jiathis_button_tqq">腾讯微博</a>
+<a class="jiathis_button_douban">豆瓣</a>
+<a class="jiathis_button_share">一键分享</a>
+
+<a href="http://www.jiathis.com/share?uid=2140465" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+var jiathis_config={
+  data_track_clickback:true,
+  summary:"",
+  shortUrl:false,
+  hideMore:false
+}
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMTk2Ny84NTMx"></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/uploads/avatar.jpg"
+                alt="会跳舞的机器人" />
+            
+              <p class="site-author-name" itemprop="name">会跳舞的机器人</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">32</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">24</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://gitee.com/dancing_robot" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:2268549298@qq.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://www.jianshu.com/u/21c249f3c8d0" target="_blank" title="简书">
+                    
+                      <i class="fa fa-fw fa-rocket"></i>简书</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="undefined" target="_blank" title="知乎">
+                    
+                      <i class="fa fa-fw fa-globe"></i>知乎</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#一、基本介绍"><span class="nav-number">1.</span> <span class="nav-text">一、基本介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#二、安装"><span class="nav-number">2.</span> <span class="nav-text">二、安装</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1、服务器规划"><span class="nav-number">2.1.</span> <span class="nav-text">1、服务器规划</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2、在对应的服务器中打开对应的端口"><span class="nav-number">2.2.</span> <span class="nav-text">2、在对应的服务器中打开对应的端口</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3、编译和安装所需要的包"><span class="nav-number">2.3.</span> <span class="nav-text">3、编译和安装所需要的包</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4、下载或者上传Redis3的最新稳定版本到-usr-local-src"><span class="nav-number">2.4.</span> <span class="nav-text">4、下载或者上传Redis3的最新稳定版本到/usr/local/src</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5、创建安装目录："><span class="nav-number">2.5.</span> <span class="nav-text">5、创建安装目录：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6、解压并进入目录"><span class="nav-number">2.6.</span> <span class="nav-text">6、解压并进入目录</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#7、编译安装（使用PREFIX指定安装目录）"><span class="nav-number">2.7.</span> <span class="nav-text">7、编译安装（使用PREFIX指定安装目录）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#9、修改6个节点的redis-conf配置文件内容"><span class="nav-number">2.8.</span> <span class="nav-text">9、修改6个节点的redis.conf配置文件内容</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#11、gem安装redis-ruby接口"><span class="nav-number">2.9.</span> <span class="nav-text">11、gem安装redis ruby接口</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#12、执行Redis集群创建命令（只需要在其中一个节点上执行即可）"><span class="nav-number">2.10.</span> <span class="nav-text">12、执行Redis集群创建命令（只需要在其中一个节点上执行即可）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#13、查看redis集群的从属状态关系"><span class="nav-number">2.11.</span> <span class="nav-text">13、查看redis集群的从属状态关系</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#14、集群的简单测试"><span class="nav-number">2.12.</span> <span class="nav-text">14、集群的简单测试</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">会跳舞的机器人</span>
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

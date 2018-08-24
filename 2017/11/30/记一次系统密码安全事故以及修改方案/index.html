@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="系统设计,系统安全," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="1、问题运营人员反馈在晚上十一点多收到系统后台登录的短信验证码，第二天在后台的操作日志中发现自已的账号有被登录过后台系统，但实际上自已并没有登录操作，怀疑账号被他人恶意登录。 2、排查过程系统后台登录需要用户名、密码、手机验证码，三者缺一不可，运维查看Nginx的访问日志，发现登录的接口被大量访问调用。联系之前系统被攻">
+<meta name="keywords" content="系统设计,系统安全">
+<meta property="og:type" content="article">
+<meta property="og:title" content="记一次系统密码安全事故以及修改方案">
+<meta property="og:url" content="http://dancing-robots.vip/2017/11/30/记一次系统密码安全事故以及修改方案/index.html">
+<meta property="og:site_name" content="会跳舞的机器人的博客">
+<meta property="og:description" content="1、问题运营人员反馈在晚上十一点多收到系统后台登录的短信验证码，第二天在后台的操作日志中发现自已的账号有被登录过后台系统，但实际上自已并没有登录操作，怀疑账号被他人恶意登录。 2、排查过程系统后台登录需要用户名、密码、手机验证码，三者缺一不可，运维查看Nginx的访问日志，发现登录的接口被大量访问调用。联系之前系统被攻击，导致数据库泄露，而系统用户的密码是用MD5加密，对于简单常用的密码实际上是可">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-11-30T09:28:50.274Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="记一次系统密码安全事故以及修改方案">
+<meta name="twitter:description" content="1、问题运营人员反馈在晚上十一点多收到系统后台登录的短信验证码，第二天在后台的操作日志中发现自已的账号有被登录过后台系统，但实际上自已并没有登录操作，怀疑账号被他人恶意登录。 2、排查过程系统后台登录需要用户名、密码、手机验证码，三者缺一不可，运维查看Nginx的访问日志，发现登录的接口被大量访问调用。联系之前系统被攻击，导致数据库泄露，而系统用户的密码是用MD5加密，对于简单常用的密码实际上是可">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '会跳舞的机器人'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://dancing-robots.vip/2017/11/30/记一次系统密码安全事故以及修改方案/"/>
+
+
+
+
+
+  <title>记一次系统密码安全事故以及修改方案 | 会跳舞的机器人的博客</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?e7f886ef194c449e0378c1c818837846";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">会跳舞的机器人的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">就像人生，不过是一场即兴。</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-主页">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            主页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-美食">
+          <a href="/美食列表/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heart"></i> <br />
+            
+            美食
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-分类">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-标签">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-归档">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-关于">
+          <a href="/关于我/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-留言板">
+          <a href="/留言板/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-comments"></i> <br />
+            
+            留言板
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://dancing-robots.vip/2017/11/30/记一次系统密码安全事故以及修改方案/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="会跳舞的机器人">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="会跳舞的机器人的博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">记一次系统密码安全事故以及修改方案</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T17:23:44+08:00">
+                2017-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/系统设计/" itemprop="url" rel="index">
+                    <span itemprop="name">系统设计</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/系统设计/工作记录/" itemprop="url" rel="index">
+                    <span itemprop="name">工作记录</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/系统设计/工作记录/系统安全/" itemprop="url" rel="index">
+                    <span itemprop="name">系统安全</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="1、问题"><a href="#1、问题" class="headerlink" title="1、问题"></a>1、问题</h3><p>运营人员反馈在晚上十一点多收到系统后台登录的短信验证码，第二天在后台的操作日志中发现自已的账号有被登录过后台系统，但实际上自已并没有登录操作，怀疑账号被他人恶意登录。</p>
+<h3 id="2、排查过程"><a href="#2、排查过程" class="headerlink" title="2、排查过程"></a>2、排查过程</h3><p>系统后台登录需要用户名、密码、手机验证码，三者缺一不可，运维查看Nginx的访问日志，发现登录的接口被大量访问调用。联系之前系统被攻击，导致数据库泄露，而系统用户的密码是用MD5加密，对于简单常用的密码实际上是可以被破解的，果然拿到被恶意登录用户的加密密码，在MD5破解网上证实确实是可以被破解的。</p>
+<p>所以整个流程可以猜测为攻击者拿到数据库后，破解了一部分密码较为简单的用户密码，再无限制的调用登录接口，用不同的验证码去尝试登录，由于验证码的长度为4位，所以攻击者最多只需要尝试10000次即可完成暴力破解。</p>
+<a id="more"></a>
+<h3 id="3、解决方案"><a href="#3、解决方案" class="headerlink" title="3、解决方案"></a>3、解决方案</h3><p>主要是5个方面的措施：</p>
+<ul>
+<li>修改验证码长度</li>
+<li>增加验证码输入错误次数限制</li>
+<li>密码加密加随机盐值处理</li>
+<li>RSA加密，前端密码公钥加密，后端私钥解密</li>
+<li>采用新规则全库修改用户密码</li>
+</ul>
+<h4 id="3-1、修改验证码长度"><a href="#3-1、修改验证码长度" class="headerlink" title="3.1、修改验证码长度"></a>3.1、修改验证码长度</h4><p>原先状况：验证码的长度为4位，攻击者暴力破解，最多只需要试10的四次方，即10000次即可完成破解。</p>
+<p>解决方案：修改验证码的长度为6位，增加暴力破解难度，注意到我们平时收到各个网站的验证码几乎都是6位数。</p>
+<h4 id="3-2、增加输入错误次数限制"><a href="#3-2、增加输入错误次数限制" class="headerlink" title="3.2、增加输入错误次数限制"></a>3.2、增加输入错误次数限制</h4><p>原先状况：验证码输入错误次数无限制，导致攻击者可以无限调用接口尝试登陆，最终被暴力破击。</p>
+<p>解决方案：限制输入错误验证码次数。此功能类似于其他网站输入N次错误密码之后就会冻结账户的功能，由于系统后台获取验证码的功能是基于正确输入用户名和密码的前提下，所以我们只需要限制错误输入验证码的次数即可。</p>
+<p>此功能利用Redis可以很容易实现，利用redis的String数据结构和超时自动过期机制，每错误一次，则错误值+1，并设置相应的过期时间，在登录的时候判断从key中获取到失败次数是否大于最大失败次数即可。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 登录次数错误+1</span><br><span class="line"> *</span><br><span class="line"> * @param userName</span><br><span class="line"> */</span><br><span class="line">private void increaseFailedLoginCounter(String userName) &#123;</span><br><span class="line">	String key = ERROR_COUNT_KEY + userName;</span><br><span class="line">	JedisCluster cluster = jedisClusterManager.getJedisCluster();</span><br><span class="line">	String v = cluster.get(key);</span><br><span class="line">	if (org.springframework.util.StringUtils.isEmpty(v)) &#123;</span><br><span class="line">		cluster.set(key, &quot;1&quot;);</span><br><span class="line">	&#125; else &#123;</span><br><span class="line">		cluster.incr(key);</span><br><span class="line">	&#125;</span><br><span class="line">	cluster.expire(key, 1800);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="3-3、密码加密加盐值处理"><a href="#3-3、密码加密加盐值处理" class="headerlink" title="3.3、密码加密加盐值处理"></a>3.3、密码加密加盐值处理</h4><p>原先状态：系统原先使用简单的MD5加密，导致数据库泄露之后，部分简单常见的密码被破解，虽然MD5加密是不可逆的，但是因为有彩虹表的存在，一些简单常用的简单密码是可以暴力破解的。</p>
+<p>解决方案：密码加密加盐值处理。数据库用户表增加salt字段存储加密盐值，在添加用户的时候，生成一个随机盐值存入数据库，用户密码加密的时候用密码+盐值进行MD5加密。同样，在登录的时候也使用密码+盐值进行MD5加密之后再和数据库的密码进行对比。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">package com.kimeng.weipan.utils;</span><br><span class="line"></span><br><span class="line">import org.apache.commons.codec.digest.DigestUtils;</span><br><span class="line"></span><br><span class="line">import java.security.SecureRandom;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * @author: 会跳舞的机器人</span><br><span class="line"> * @date: 2017/9/18 15:08</span><br><span class="line"> * @description: MD5工具类</span><br><span class="line"> */</span><br><span class="line">public class MD5Utils &#123;</span><br><span class="line">    private static final String B64T = &quot;./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz&quot;;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * MD5加密</span><br><span class="line">     *</span><br><span class="line">     * @param plaintext 密码</span><br><span class="line">     * @param salt      盐值</span><br><span class="line">     * @return 密文</span><br><span class="line">     */</span><br><span class="line">    public static String md5Hex(String plaintext, String salt) &#123;</span><br><span class="line">        return DigestUtils.md5Hex(plaintext + salt);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 获取64位的随机盐值</span><br><span class="line">     */</span><br><span class="line">    public static String getRandomSalt() &#123;</span><br><span class="line">        return getRandomSalt(64);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 获取指定位数的随机盐值</span><br><span class="line">     *</span><br><span class="line">     * @param num 位数</span><br><span class="line">     * @return 随机盐值</span><br><span class="line">     */</span><br><span class="line">    public static String getRandomSalt(final int num) &#123;</span><br><span class="line">        final StringBuilder saltString = new StringBuilder();</span><br><span class="line">        for (int i = 1; i &lt;= num; i++) &#123;</span><br><span class="line">            saltString.append(B64T.charAt(new SecureRandom().nextInt(B64T.length())));</span><br><span class="line">        &#125;</span><br><span class="line">        return saltString.toString();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="3-4、RSA加密，前端密码公钥加密，后端私钥解密"><a href="#3-4、RSA加密，前端密码公钥加密，后端私钥解密" class="headerlink" title="3.4、RSA加密，前端密码公钥加密，后端私钥解密"></a>3.4、RSA加密，前端密码公钥加密，后端私钥解密</h4><p>原先状况：登录密码明文传输，没有https，可能导致密码在传输的过程中被监听劫持。</p>
+<p>解决方案：利用RSA加密，服务端生成一对密钥缓存至Redis，在用户登录的时候先调用服务端的获取公钥接口获取到公钥，然后用公钥加密密码之后，再传到服务端，服务端从Redis中获取到私钥之后进行密码解密。就算数据被监听劫持，没有私钥攻击者也无法解密，保证密码在传输过程中的安全。</p>
+<p>RSA非对称加密的相关内容可以点这里<a href="http://www.jianshu.com/p/d56a72013392" target="_blank" rel="noopener">RSA非对称加密算法</a></p>
+<ul>
+<li>前端登录function<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">function login() &#123;</span><br><span class="line">    var publicKey = &quot;&quot;;</span><br><span class="line">    var userName = $(&quot;#loginname&quot;).val();</span><br><span class="line">    // 获取公钥</span><br><span class="line">    $.ajax(&#123;</span><br><span class="line">               type: &quot;GET&quot;,</span><br><span class="line">               url: &apos;$&#123;pageContext.request.contextPath&#125;/xxxx/getPublicKey?userName=&apos;</span><br><span class="line">                    + userName,</span><br><span class="line">               cache: false,</span><br><span class="line">               async: false,</span><br><span class="line">               dataType: &quot;text&quot;,</span><br><span class="line">               success: function (data) &#123;</span><br><span class="line">                   publicKey = data</span><br><span class="line">               &#125;,</span><br><span class="line">           &#125;);</span><br><span class="line">    // RSA加密密码</span><br><span class="line">    var encrypt = new JSEncrypt();</span><br><span class="line">    encrypt.setPublicKey(publicKey);</span><br><span class="line">    var encryptPwd = encrypt.encrypt($(&quot;#password&quot;).val());</span><br><span class="line">    $(&quot;#password&quot;).val(encryptPwd);</span><br><span class="line">    $(&quot;#loginForm&quot;).submit();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>注意：前端RSA加密需要引入jsencrypt.js库</p>
+<ul>
+<li><p>获取公钥接口</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"> /**</span><br><span class="line"> * 获取RSA公钥</span><br><span class="line"> */</span><br><span class="line">@RequestMapping(&quot;/getPublicKey&quot;)</span><br><span class="line">@ResponseBody</span><br><span class="line">public String getPublicKey(HttpServletRequest request) &#123;</span><br><span class="line">    String userName = ServletRequestUtils.getStringParameter(request, &quot;userName&quot;, &quot;&quot;);</span><br><span class="line">    if (StringUtil.isEmpty(userName)) &#123;</span><br><span class="line">        return &quot;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    // RSA生成公钥私钥</span><br><span class="line">    Map&lt;String, Object&gt; map = RSAUtil.init();</span><br><span class="line">    String publicKey = RSAUtil.getPublicKey(map);</span><br><span class="line">    String privateKey = RSAUtil.getPrivateKey(map);</span><br><span class="line"></span><br><span class="line">    // 公钥私钥缓存至redis，过期时间为一分钟，如果存在则覆盖</span><br><span class="line">    String key = RedisConstants.PREFIX_RSA_LOGIN + userName;</span><br><span class="line">    JedisCluster jedisCluster = jedisClusterManager.getJedisCluster();</span><br><span class="line">    jedisCluster.hset(key, RedisConstants.KEY_PUBLIC_KEY, publicKey);</span><br><span class="line">    jedisCluster.hset(key, RedisConstants.KEY_PRIVATE_KEY, privateKey);</span><br><span class="line">    jedisCluster.expire(key, 60);</span><br><span class="line"></span><br><span class="line">    return publicKey;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<ul>
+<li>RSA密码解密<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"> /**</span><br><span class="line"> * RSA密码解密</span><br><span class="line"> */</span><br><span class="line">private String decodeRSAPwd(String key, String password) throws Exception &#123;</span><br><span class="line">    String privateKey = jedisClusterManager.getJedisCluster().hget(key, RedisConstants.KEY_PRIVATE_KEY);</span><br><span class="line">    if (StringUtil.isEmpty(privateKey)) &#123;</span><br><span class="line">        logger.error(&quot;private key is null for key&#123;&quot; + key + &quot;&#125;&quot;);</span><br><span class="line">        throw new Exception(&quot;private key is null&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">     String pwd = RSAUtil.decryptByPrivateKey(password.getBytes(), privateKey);</span><br><span class="line">    if (pwd == null) &#123;</span><br><span class="line">        throw new Exception(&quot;decode password fail&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">    logger.info(&quot;decode password success&quot;);</span><br><span class="line">    return pwd;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>如果您觉得有帮助到您，不妨考虑请作者喝杯咖啡鼓励一下。</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/uploads/weixin.png" alt="会跳舞的机器人 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/uploads/alipay.png" alt="会跳舞的机器人 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者：</strong>
+    会跳舞的机器人
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://dancing-robots.vip/2017/11/30/记一次系统密码安全事故以及修改方案/" title="记一次系统密码安全事故以及修改方案">http://dancing-robots.vip/2017/11/30/记一次系统密码安全事故以及修改方案/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/系统设计/" rel="tag"># 系统设计</a>
+          
+            <a href="/tags/系统安全/" rel="tag"># 系统安全</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/11/30/实时交易数据监控系统的设计与实现/" rel="next" title="实时交易数据监控系统的设计与实现">
+                <i class="fa fa-chevron-left"></i> 实时交易数据监控系统的设计与实现
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/08/24/2018-08-24腾讯云自媒体分享计划/" rel="prev" title="2018-08-24腾讯云自媒体分享计划">
+                2018-08-24腾讯云自媒体分享计划 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+<span class="jiathis_txt">分享到：</span>
+<a class="jiathis_button_fav">收藏夹</a>
+<a class="jiathis_button_copy">复制网址</a>
+<a class="jiathis_button_email">邮件</a>
+<a class="jiathis_button_weixin">微信</a>
+<a class="jiathis_button_qzone">QQ空间</a>
+<a class="jiathis_button_tqq">腾讯微博</a>
+<a class="jiathis_button_douban">豆瓣</a>
+<a class="jiathis_button_share">一键分享</a>
+
+<a href="http://www.jiathis.com/share?uid=2140465" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+var jiathis_config={
+  data_track_clickback:true,
+  summary:"",
+  shortUrl:false,
+  hideMore:false
+}
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMTk2Ny84NTMx"></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/uploads/avatar.jpg"
+                alt="会跳舞的机器人" />
+            
+              <p class="site-author-name" itemprop="name">会跳舞的机器人</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">32</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">24</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://gitee.com/dancing_robot" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:2268549298@qq.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://www.jianshu.com/u/21c249f3c8d0" target="_blank" title="简书">
+                    
+                      <i class="fa fa-fw fa-rocket"></i>简书</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="undefined" target="_blank" title="知乎">
+                    
+                      <i class="fa fa-fw fa-globe"></i>知乎</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#1、问题"><span class="nav-number">1.</span> <span class="nav-text">1、问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2、排查过程"><span class="nav-number">2.</span> <span class="nav-text">2、排查过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3、解决方案"><span class="nav-number">3.</span> <span class="nav-text">3、解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1、修改验证码长度"><span class="nav-number">3.1.</span> <span class="nav-text">3.1、修改验证码长度</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2、增加输入错误次数限制"><span class="nav-number">3.2.</span> <span class="nav-text">3.2、增加输入错误次数限制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-3、密码加密加盐值处理"><span class="nav-number">3.3.</span> <span class="nav-text">3.3、密码加密加盐值处理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-4、RSA加密，前端密码公钥加密，后端私钥解密"><span class="nav-number">3.4.</span> <span class="nav-text">3.4、RSA加密，前端密码公钥加密，后端私钥解密</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">会跳舞的机器人</span>
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="MQ,RabbitMQ," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="一、简要介绍 开源AMQP实现，Erlang语言编写，支持多种客户端 分布式、高可用、持久化、可靠、安全 支持多种协议：AMQP、STOMP、MQTT、HTTP 适用于多系统之间的业务解耦的消息中间件">
+<meta name="keywords" content="MQ,RabbitMQ">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RabbitMQ简介以及应用">
+<meta property="og:url" content="http://dancing-robots.vip/2017/11/30/RabbitMQ简介以及应用/index.html">
+<meta property="og:site_name" content="会跳舞的机器人的博客">
+<meta property="og:description" content="一、简要介绍 开源AMQP实现，Erlang语言编写，支持多种客户端 分布式、高可用、持久化、可靠、安全 支持多种协议：AMQP、STOMP、MQTT、HTTP 适用于多系统之间的业务解耦的消息中间件">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-11-30T08:46:07.945Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="RabbitMQ简介以及应用">
+<meta name="twitter:description" content="一、简要介绍 开源AMQP实现，Erlang语言编写，支持多种客户端 分布式、高可用、持久化、可靠、安全 支持多种协议：AMQP、STOMP、MQTT、HTTP 适用于多系统之间的业务解耦的消息中间件">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '会跳舞的机器人'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://dancing-robots.vip/2017/11/30/RabbitMQ简介以及应用/"/>
+
+
+
+
+
+  <title>RabbitMQ简介以及应用 | 会跳舞的机器人的博客</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?e7f886ef194c449e0378c1c818837846";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">会跳舞的机器人的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">就像人生，不过是一场即兴。</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-主页">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            主页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-美食">
+          <a href="/美食列表/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heart"></i> <br />
+            
+            美食
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-分类">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-标签">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-归档">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-关于">
+          <a href="/关于我/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-留言板">
+          <a href="/留言板/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-comments"></i> <br />
+            
+            留言板
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://dancing-robots.vip/2017/11/30/RabbitMQ简介以及应用/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="会跳舞的机器人">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="会跳舞的机器人的博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">RabbitMQ简介以及应用</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-30T16:44:45+08:00">
+                2017-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RabbitMQ/" itemprop="url" rel="index">
+                    <span itemprop="name">RabbitMQ</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="一、简要介绍"><a href="#一、简要介绍" class="headerlink" title="一、简要介绍"></a>一、简要介绍</h4><ul>
+<li>开源AMQP实现，Erlang语言编写，支持多种客户端</li>
+<li>分布式、高可用、持久化、可靠、安全</li>
+<li>支持多种协议：AMQP、STOMP、MQTT、HTTP</li>
+<li>适用于多系统之间的业务解耦的消息中间件</li>
+</ul>
+<a id="more"></a>
+<h4 id="二、基本概念"><a href="#二、基本概念" class="headerlink" title="二、基本概念"></a>二、基本概念</h4><p>1、exchange：交换器，负责接收消息，转发消息至绑定的队列，有四种类型：</p>
+<ul>
+<li>direct：完全匹配的路由</li>
+<li>topic：模式匹配的路由</li>
+<li>fanout：广播模式</li>
+<li>headers：键值对匹配路由</li>
+</ul>
+<p>Exchange属性：</p>
+<ul>
+<li>持久化：如果启用，那么rabbit服务重启之后仍然存在</li>
+<li>自动删除：如果启用，那么交换器将会在其绑定的队列都被删除掉之后自动删除掉自身</li>
+</ul>
+<p>2、Queue：队列，rabbitmq的内部对象，用于存储消息，其属性类似于Exchange，同样可以设置是否持久化、自动删除等。<br>消费者重Queue中获取消息并消费。多个消费者可以订阅同一个Queue，这时Queue中的消息会被平均分摊给多个消费者进行处理，而不是每个消费者都收到所有的消息并处理。</p>
+<p>3、Binding：绑定，根据路由规则绑定交换器与队列</p>
+<p>4、Routing：路由键，路由的关键字</p>
+<h4 id="三、消息的可靠性"><a href="#三、消息的可靠性" class="headerlink" title="三、消息的可靠性"></a>三、消息的可靠性</h4><ul>
+<li><p>Message acknowledgment：消息确认，在消息确认机制下，收到回执才会删除消息，未收到回执而断开了连接，消息会转发给其他消费者，如果忘记回执，会导致消息堆积，消费者重启后会重复消费这些消息并重复执行业务逻辑。</p>
+</li>
+<li><p>Message durability：消息持久化，设置消息持久化可以避免绝大部分消息丢失，比如rabbitmq服务重启，但是采用非持久化可以提升队列的处理效率。如果要确保消息的持久化，那么消息对应的Exchange和Queue同样要设置为持久化。</p>
+</li>
+<li><p>Prefetch count，每次发送给消费者消息的数量，默认为1</p>
+</li>
+</ul>
+<p>另外，如果需要可靠性业务，需要设置持久化和ack机制，如果系统高吞吐，可以设置为非持久化、noack、自动删除机制</p>
+<h4 id="四、简单应用"><a href="#四、简单应用" class="headerlink" title="四、简单应用"></a>四、简单应用</h4><p>模拟这样一个业务场景，用户下单成功后，需要给用户增加积分，同时还需要给用户发送下单成功的消息，这是在电商业务中很常见的一个业务场景。</p>
+<p>如果系统是微服务架构，可能用户下单功能在订单服务，给用户增加积分的功能在积分服务，给用户发送通知消息的功能在通知服务，各个服务之间解耦，互不影响。那么要实现上述的业务场景，消息中间件rabbitmq是一个很好的选择。<br>原因如下：</p>
+<ul>
+<li>高性能，它的实现语言是天生具备高并发高可用的erlang 语言</li>
+<li>支持消息的持久化，即使服务器挂了，也不会丢失消息</li>
+<li>消息应答（ack）机制，消费者消费完消息后发送一个消息应答，rabbitmq才会删除消息，确保消息的可靠性</li>
+<li>支持高可用集群</li>
+<li>灵活的路由</li>
+</ul>
+<p>实现思路：</p>
+<p>用户下单成功后，rabbitmq发送一条消息至EXCHANGE.ORDER_CREATE交换器，该交换器绑定了两个队列，QUEUE.ORDER_INCREASESCORE、QUEUE.ORDER_NOTIFY，消费者订阅这两个队列分别用来处理增加积分、发送用户通知。如果后续日志系统还需要记录下单的相关日志，那么我们只需要再定义一个队列并将其绑定到EXCHANGE.ORDER_CREATE即可。</p>
+<p>pom.xml增加rabbitmq的jar包依赖<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">  &lt;groupId&gt;com.rabbitmq&lt;/groupId&gt;</span><br><span class="line">  &lt;artifactId&gt;amqp-client&lt;/artifactId&gt;</span><br><span class="line">  &lt;version&gt;3.6.5&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure></p>
+<p>下单发rabbitmq消息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">package com.robot.rabbitmq;</span><br><span class="line"></span><br><span class="line">import com.rabbitmq.client.AMQP;</span><br><span class="line">import com.rabbitmq.client.Channel;</span><br><span class="line">import com.rabbitmq.client.Connection;</span><br><span class="line">import com.rabbitmq.client.ConnectionFactory;</span><br><span class="line"></span><br><span class="line">import java.io.IOException;</span><br><span class="line">import java.util.UUID;</span><br><span class="line">import java.util.concurrent.TimeoutException;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * @author: 会跳舞的机器人</span><br><span class="line"> * @date: 2017/10/13 10:46</span><br><span class="line"> * @description: 模拟用户下单之后发送rabbitmq消息</span><br><span class="line"> */</span><br><span class="line">public class OrderCreator &#123;</span><br><span class="line">    // 交换器名称</span><br><span class="line">    private static final String EXCHANGE = &quot;EXCHANGE.ORDER_CREATE&quot;;</span><br><span class="line">    // 消息内容</span><br><span class="line">    private static String msg = &quot;create order success&quot;;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 模拟创建订单后发送mq消息</span><br><span class="line">     */</span><br><span class="line">    public void createOrder() &#123;</span><br><span class="line">        System.out.println(&quot;下单成功，开始发送rabbitmq消息&quot;);</span><br><span class="line"></span><br><span class="line">        ConnectionFactory connectionFactory = new ConnectionFactory();</span><br><span class="line">        connectionFactory.setHost(&quot;192.168.12.44&quot;);</span><br><span class="line">        connectionFactory.setPort(56720);</span><br><span class="line">        connectionFactory.setUsername(&quot;baibei&quot;);</span><br><span class="line">        connectionFactory.setPassword(&quot;baibei&quot;);</span><br><span class="line"></span><br><span class="line">        Connection connection;</span><br><span class="line">        Channel channel;</span><br><span class="line">        try &#123;</span><br><span class="line">            connection = connectionFactory.newConnection();</span><br><span class="line">            channel = connection.createChannel();</span><br><span class="line">            // 持久化</span><br><span class="line">            boolean durable = true;</span><br><span class="line">            // topic类型</span><br><span class="line">            String type = &quot;topic&quot;;</span><br><span class="line">            // 声明交换器，如果交换器不存在则创建之</span><br><span class="line">            channel.exchangeDeclare(EXCHANGE, type, durable);</span><br><span class="line"></span><br><span class="line">            String messgeId = UUID.randomUUID().toString();</span><br><span class="line">            // deliveryMode&gt;=2表示设置消息持久化</span><br><span class="line">            AMQP.BasicProperties props = new AMQP.BasicProperties.Builder().deliveryMode(2).messageId(messgeId).build();</span><br><span class="line">            // 发布消息</span><br><span class="line">            String routingKey = &quot;order_create&quot;;</span><br><span class="line">            channel.basicPublish(EXCHANGE, routingKey, props, msg.getBytes(&quot;utf-8&quot;));</span><br><span class="line">            connection.close();</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; catch (TimeoutException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>积分系统订阅消息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line">package com.robot.rabbitmq;</span><br><span class="line"></span><br><span class="line">import com.rabbitmq.client.AMQP;</span><br><span class="line">import com.rabbitmq.client.Channel;</span><br><span class="line">import com.rabbitmq.client.Connection;</span><br><span class="line">import com.rabbitmq.client.ConnectionFactory;</span><br><span class="line">import com.rabbitmq.client.Consumer;</span><br><span class="line">import com.rabbitmq.client.Envelope;</span><br><span class="line">import com.rabbitmq.client.ShutdownSignalException;</span><br><span class="line"></span><br><span class="line">import java.io.IOException;</span><br><span class="line">import java.util.concurrent.TimeoutException;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * @author: 会跳舞的机器人</span><br><span class="line"> * @date: 2017/10/13 16:02</span><br><span class="line"> * @description: rabbitmq消费者，模拟下单成功后给用户增加积分</span><br><span class="line"> */</span><br><span class="line">public class IncreaseScoreConsumer implements Consumer &#123;</span><br><span class="line">    private Connection connection;</span><br><span class="line">    private Channel channel;</span><br><span class="line">    // 交换器名称</span><br><span class="line">    private static final String EXCHANGE = &quot;EXCHANGE.ORDER_CREATE&quot;;</span><br><span class="line">    // 增加积分队列名称</span><br><span class="line">    private static final String QUEUENAME = &quot;QUEUE.ORDER_INCREASESCORE&quot;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    public void consume() &#123;</span><br><span class="line">        // 初始化rabbitmq连接信息</span><br><span class="line">        ConnectionFactory connectionFactory = new ConnectionFactory();</span><br><span class="line">        connectionFactory.setHost(&quot;192.168.12.44&quot;);</span><br><span class="line">        connectionFactory.setPort(56720);</span><br><span class="line">        connectionFactory.setUsername(&quot;baibei&quot;);</span><br><span class="line">        connectionFactory.setPassword(&quot;baibei&quot;);</span><br><span class="line">        try &#123;</span><br><span class="line">            connection = connectionFactory.newConnection();</span><br><span class="line">            channel = connection.createChannel();</span><br><span class="line">            // 声明交换器</span><br><span class="line">            channel.exchangeDeclare(EXCHANGE, &quot;topic&quot;, true);</span><br><span class="line">            // 声明队列</span><br><span class="line">            channel.queueDeclare(QUEUENAME, true, false, false, null);</span><br><span class="line">            // 交换器与队列绑定并设置routingKey</span><br><span class="line">            channel.queueBind(QUEUENAME, EXCHANGE, &quot;order_create&quot;);</span><br><span class="line">            // 消费消息，callback是该类，关闭自动确认消息，在完成业务逻辑后手动确认确认</span><br><span class="line">            channel.basicConsume(QUEUENAME, false, this);</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; catch (TimeoutException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException &#123;</span><br><span class="line">        String msg = new String(body, &quot;UTF-8&quot;);</span><br><span class="line">        System.out.println(&quot;《积分系统》收到订单消息：&quot; + msg + &quot;，给用户增加积分......&quot;);</span><br><span class="line">        // 手动确认消息</span><br><span class="line">        channel.basicAck(envelope.getDeliveryTag(), false);</span><br><span class="line"></span><br><span class="line">        /**</span><br><span class="line">         * channel.basicReject(envelope.getDeliveryTag(), false);该方法会丢弃掉队列中的这条消息</span><br><span class="line">         * channel.basicReject(envelope.getDeliveryTag(), true);该方法会把消息重新放回队列</span><br><span class="line">         * 一般系统会设定一个重试次数，如果超过重试次数，则会丢弃消息，反之则会把消息再放入队列</span><br><span class="line">         */</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void handleConsumeOk(String consumerTag) &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void handleCancelOk(String consumerTag) &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void handleCancel(String consumerTag) throws IOException &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void handleRecoverOk(String consumerTag) &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>通知系统订阅消息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line">package com.robot.rabbitmq;</span><br><span class="line"></span><br><span class="line">import com.rabbitmq.client.AMQP;</span><br><span class="line">import com.rabbitmq.client.Channel;</span><br><span class="line">import com.rabbitmq.client.Connection;</span><br><span class="line">import com.rabbitmq.client.ConnectionFactory;</span><br><span class="line">import com.rabbitmq.client.Consumer;</span><br><span class="line">import com.rabbitmq.client.Envelope;</span><br><span class="line">import com.rabbitmq.client.ShutdownSignalException;</span><br><span class="line"></span><br><span class="line">import java.io.IOException;</span><br><span class="line">import java.util.concurrent.TimeoutException;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * @author: 会跳舞的机器人</span><br><span class="line"> * @date: 2017/10/13 16:20</span><br><span class="line"> * @description: rabbitmq消费者，模拟下单成功后给用户发送通知</span><br><span class="line"> */</span><br><span class="line">public class NotifyConsumer implements Consumer &#123;</span><br><span class="line">    private Connection connection;</span><br><span class="line">    private Channel channel;</span><br><span class="line"></span><br><span class="line">    // 交换器名称</span><br><span class="line">    private static final String EXCHANGE = &quot;EXCHANGE.ORDER_CREATE&quot;;</span><br><span class="line">    // 通知用户下单成功通知队列名称</span><br><span class="line">    private static final String QUEUENAME = &quot;QUEUE.ORDER_NOTIFY&quot;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    public void consume() &#123;</span><br><span class="line">        // 初始化rabbitmq连接信息</span><br><span class="line">        ConnectionFactory connectionFactory = new ConnectionFactory();</span><br><span class="line">        connectionFactory.setHost(&quot;192.168.12.44&quot;);</span><br><span class="line">        connectionFactory.setPort(56720);</span><br><span class="line">        connectionFactory.setUsername(&quot;baibei&quot;);</span><br><span class="line">        connectionFactory.setPassword(&quot;baibei&quot;);</span><br><span class="line">        try &#123;</span><br><span class="line">            connection = connectionFactory.newConnection();</span><br><span class="line">            channel = connection.createChannel();</span><br><span class="line">            // 声明交换器</span><br><span class="line">            channel.exchangeDeclare(EXCHANGE, &quot;topic&quot;, true);</span><br><span class="line">            // 声明队列</span><br><span class="line">            channel.queueDeclare(QUEUENAME, true, false, false, null);</span><br><span class="line">            // 交换器与队列绑定并设置routingKey</span><br><span class="line">            channel.queueBind(QUEUENAME, EXCHANGE, &quot;order_create&quot;);</span><br><span class="line">            // 消费消息，callback是该类，关闭自动确认消息，在完成业务逻辑后手动确认确认</span><br><span class="line">            channel.basicConsume(QUEUENAME, false, this);</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; catch (TimeoutException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException &#123;</span><br><span class="line">        String msg = new String(body, &quot;UTF-8&quot;);</span><br><span class="line">        System.out.println(&quot;《通知系统》收到订单消息：&quot; + msg + &quot;，开始给用户发送通知......&quot;);</span><br><span class="line">        // 手动确认消息</span><br><span class="line">        channel.basicAck(envelope.getDeliveryTag(), false);</span><br><span class="line"></span><br><span class="line">        /**</span><br><span class="line">         * channel.basicReject(envelope.getDeliveryTag(), false);该方法会丢弃掉队列中的这条消息</span><br><span class="line">         * channel.basicReject(envelope.getDeliveryTag(), true);该方法会把消息重新放回队列</span><br><span class="line">         * 一般系统会设定一个重试次数，如果超过重试次数，则会丢弃消息，反之则会把消息再放入队列</span><br><span class="line">         */</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void handleConsumeOk(String consumerTag) &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void handleCancelOk(String consumerTag) &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void handleCancel(String consumerTag) throws IOException &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void handleRecoverOk(String consumerTag) &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>测试<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">package com.robot.rabbitmq;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * @author: 会跳舞的机器人</span><br><span class="line"> * @date: 2017/10/13 16:27</span><br><span class="line"> * @description:</span><br><span class="line"> */</span><br><span class="line">public class Test &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line"></span><br><span class="line">        IncreaseScoreConsumer increaseScoreConsumer = new IncreaseScoreConsumer();</span><br><span class="line">        increaseScoreConsumer.consume();</span><br><span class="line"></span><br><span class="line">        NotifyConsumer notifyConsumer = new NotifyConsumer();</span><br><span class="line">        notifyConsumer.consume();</span><br><span class="line"></span><br><span class="line">        OrderCreator orderCreator = new OrderCreator();</span><br><span class="line">        for (int i = 0; i &lt; 3; i++) &#123;</span><br><span class="line">            orderCreator.createOrder();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>输出：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">下单成功，开始发送rabbitmq消息</span><br><span class="line">《积分系统》收到订单消息：create order success，给用户增加积分......</span><br><span class="line">《通知系统》收到订单消息：create order success，开始给用户发送通知......</span><br><span class="line">下单成功，开始发送rabbitmq消息</span><br><span class="line">《积分系统》收到订单消息：create order success，给用户增加积分......</span><br><span class="line">《通知系统》收到订单消息：create order success，开始给用户发送通知......</span><br><span class="line">下单成功，开始发送rabbitmq消息</span><br><span class="line">《积分系统》收到订单消息：create order success，给用户增加积分......</span><br><span class="line">《通知系统》收到订单消息：create order success，开始给用户发送通知......</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>如果您觉得有帮助到您，不妨考虑请作者喝杯咖啡鼓励一下。</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/uploads/weixin.png" alt="会跳舞的机器人 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/uploads/alipay.png" alt="会跳舞的机器人 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者：</strong>
+    会跳舞的机器人
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://dancing-robots.vip/2017/11/30/RabbitMQ简介以及应用/" title="RabbitMQ简介以及应用">http://dancing-robots.vip/2017/11/30/RabbitMQ简介以及应用/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/MQ/" rel="tag"># MQ</a>
+          
+            <a href="/tags/RabbitMQ/" rel="tag"># RabbitMQ</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/11/29/java并发编程的艺术第十章——Executor框架/" rel="next" title="java并发编程的艺术第十章——Executor框架">
+                <i class="fa fa-chevron-left"></i> java并发编程的艺术第十章——Executor框架
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/11/30/Redis集群的安装/" rel="prev" title="Redis集群的安装">
+                Redis集群的安装 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+<span class="jiathis_txt">分享到：</span>
+<a class="jiathis_button_fav">收藏夹</a>
+<a class="jiathis_button_copy">复制网址</a>
+<a class="jiathis_button_email">邮件</a>
+<a class="jiathis_button_weixin">微信</a>
+<a class="jiathis_button_qzone">QQ空间</a>
+<a class="jiathis_button_tqq">腾讯微博</a>
+<a class="jiathis_button_douban">豆瓣</a>
+<a class="jiathis_button_share">一键分享</a>
+
+<a href="http://www.jiathis.com/share?uid=2140465" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+var jiathis_config={
+  data_track_clickback:true,
+  summary:"",
+  shortUrl:false,
+  hideMore:false
+}
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMTk2Ny84NTMx"></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/uploads/avatar.jpg"
+                alt="会跳舞的机器人" />
+            
+              <p class="site-author-name" itemprop="name">会跳舞的机器人</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">32</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">24</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://gitee.com/dancing_robot" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:2268549298@qq.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://www.jianshu.com/u/21c249f3c8d0" target="_blank" title="简书">
+                    
+                      <i class="fa fa-fw fa-rocket"></i>简书</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="undefined" target="_blank" title="知乎">
+                    
+                      <i class="fa fa-fw fa-globe"></i>知乎</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#一、简要介绍"><span class="nav-number">1.</span> <span class="nav-text">一、简要介绍</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#二、基本概念"><span class="nav-number">2.</span> <span class="nav-text">二、基本概念</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#三、消息的可靠性"><span class="nav-number">3.</span> <span class="nav-text">三、消息的可靠性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#四、简单应用"><span class="nav-number">4.</span> <span class="nav-text">四、简单应用</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">会跳舞的机器人</span>
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
